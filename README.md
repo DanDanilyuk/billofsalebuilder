@@ -33,10 +33,10 @@ bill_of_sale/
 │   ├── validation.js     # VIN / HIN / year / ZIP / price rules
 │   ├── storage.js        # localStorage save / restore / clear
 │   ├── copy.js           # all UI text (single source of truth)
-│   └── pdf.js            # jsPDF document builder
+│   ├── pdf.js            # jsPDF document builder
+│   └── vin-decoder.js    # NHTSA vPIC VIN auto-decode
 ├── lib/jspdf.umd.min.js  # vendored, no CDN at runtime
-├── assets/fonts/         # Inter woff2 (self-hosted)
-└── docs/                 # spec and plan
+└── assets/fonts/         # Inter woff2 (self-hosted)
 ```
 
 ## Required fields by vehicle type

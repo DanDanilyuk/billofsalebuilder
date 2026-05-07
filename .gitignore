@@ -3,3 +3,5 @@
 .playwright-mcp/
 node_modules/
 TASK_LIST.md
+docs/superpowers/
+CLAUDE.md
