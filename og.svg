@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <line x1="80" y1="120" x2="1120" y2="120" stroke="#262626" stroke-width="1"/>
+  <line x1="80" y1="510" x2="1120" y2="510" stroke="#262626" stroke-width="1"/>
+  <text x="80" y="100" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#a3a3a3" letter-spacing="3">VEHICLE BILL OF SALE</text>
+  <text x="80" y="320" font-family="Helvetica, Arial, sans-serif" font-size="92" font-weight="700" fill="#fafafa">Free, printable, no</text>
+  <text x="80" y="420" font-family="Helvetica, Arial, sans-serif" font-size="92" font-weight="700" fill="#fafafa">sign-up. All 50 states.</text>
+  <text x="80" y="555" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="400" fill="#a3a3a3">Cars, trailers, boats. State-aware notary and odometer rules.</text>
+</svg>
