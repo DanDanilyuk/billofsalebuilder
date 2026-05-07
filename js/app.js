@@ -177,7 +177,7 @@ function renderField(field) {
   const value = getByPath(state, field.path);
 
   if (field.kind === 'checkbox') {
-    // Single inline-label checkbox (e.g. as-is acknowledgment).
+    // Single inline-label checkbox (e.g. notary toggle).
     const group = document.createElement('div');
     group.className = 'checkbox-group';
     const lbl = document.createElement('label');
@@ -542,16 +542,16 @@ function onFieldChange(e) {
   }
 }
 
-// When the user picks a US state, flip includeNotary on iff the state requires
-// or recommends notarization AND the user hasn't explicitly toggled the
-// checkbox themselves. Once notaryUserSet is true, this auto-default is a
-// no-op for the rest of the session.
+// When the user picks a US state, flip includeNotary on iff the state REQUIRES
+// notarization AND the user hasn't explicitly toggled the checkbox themselves.
+// 'recommended' / 'optional' leave the box unchecked (still visible, so the
+// user can opt in). Once notaryUserSet is true, this auto-default is a no-op
+// for the rest of the session.
 function applyNotaryAutoDefault() {
   if (state.sale.notaryUserSet) return;
   const stateData = STATES[state.meta?.usState];
   if (!stateData) return;
-  state.sale.includeNotary = stateData.notary === 'required'
-    || stateData.notary === 'recommended';
+  state.sale.includeNotary = stateData.notary === 'required';
 }
 
 // ---- ZIP -> city/state lookup -------------------------------------------

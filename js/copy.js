@@ -232,10 +232,6 @@ export const COPY = {
       },
     },
     paymentOther: { label: "Describe payment", req: true },
-    asIsAck: {
-      label: "I understand the vehicle is sold as-is, with no warranties expressed or implied.",
-      req: true,
-    },
     priceNegotiable: { label: "Negotiable - leave sale price blank", req: false },
     includeNotary: { label: "Add notary block to the PDF", req: false },
   },

@@ -61,7 +61,6 @@ export function defaultState() {
       date: new Date().toISOString().slice(0, 10),
       payment: 'cash',
       paymentOther: '',
-      asIsAck: false,
       priceNegotiable: false,
       includeNotary: false,
       // Tracks whether the user has explicitly toggled the notary checkbox.

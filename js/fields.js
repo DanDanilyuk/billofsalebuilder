@@ -220,7 +220,6 @@ function saleFields(state) {
       req: true, kind: 'text',
       showWhen: (s) => s.sale.payment === 'other',
     },
-    { path: 'sale.asIsAck', label: c.asIsAck.label, req: true, kind: 'checkbox' },
   ];
 
   if (notaryNeeded) {
