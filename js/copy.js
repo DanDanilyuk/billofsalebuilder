@@ -43,7 +43,7 @@ export const COPY = {
       setup: {
         eyebrow: "Step 1 of 6",
         title: "Setup",
-        sub: "Pick a state and your role.",
+        sub: "Pick the state where the title will be transferred and your role in the sale.",
       },
       you: {
         eyebrow: "Step 2 of 6",
@@ -73,7 +73,7 @@ export const COPY = {
     },
   },
   meta: {
-    usState: { label: "Which US state?", req: true },
+    usState: { label: "State where the title will be transferred", req: true },
     role: {
       label: "I am the...",
       req: true,
@@ -177,6 +177,7 @@ export const COPY = {
     middleName: { label: "Middle name (optional)", req: false },
     lastName: { label: "Last name", req: true },
     street: { label: "Street address", req: true },
+    street2: { label: "Apt / Suite / Unit (optional)", req: false },
     city: { label: "City", req: true },
     state: { label: "State", req: true },
     zip: { label: "ZIP", req: true },
@@ -188,6 +189,7 @@ export const COPY = {
     },
     coOwnerToggle: { label: "Two people on the title", req: false },
     coOwnerSameAddress: { label: "Co-owner shares this address", req: false },
+    coOwnerStreet2: { label: "Co-owner apt / suite / unit (optional)", req: false },
     coOwnerFirstName: { label: "Co-owner first name", req: false },
     coOwnerMiddleName: { label: "Co-owner middle name (optional)", req: false },
     coOwnerLastName: { label: "Co-owner last name", req: false },

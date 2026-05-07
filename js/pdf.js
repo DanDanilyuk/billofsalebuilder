@@ -172,7 +172,11 @@ function partyAddressLine(p) {
     p.city?.trim() || '',
     [p.state?.trim() || '', p.zip?.trim() || ''].filter(Boolean).join(' '),
   ].filter(Boolean).join(', ');
-  return [p.street?.trim() || '', cityStateZip].filter(Boolean).join(', ');
+  return [
+    p.street?.trim() || '',
+    p.street2?.trim() || '',
+    cityStateZip,
+  ].filter(Boolean).join(', ');
 }
 
 function partyFullName(p) {
@@ -218,6 +222,7 @@ function drawParty(doc, y, heading, party) {
       ? {
           ...party.coOwner,
           street: party.street,
+          street2: party.street2,
           city: party.city,
           state: party.state,
           zip: party.zip,

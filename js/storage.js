@@ -32,7 +32,7 @@ export function defaultState() {
     },
     seller: {
       firstName: '', middleName: '', lastName: '',
-      street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      street: '', street2: '', city: '', state: 'VA', zip: '', phone: '', license: '',
       skipFill: false,
       // Joint-title support: when hasCoOwner is true, the form shows a second
       // set of fields for the co-owner and the PDF prints them.
@@ -42,18 +42,18 @@ export function defaultState() {
       coOwnerSameAddress: false,
       coOwner: {
         firstName: '', middleName: '', lastName: '',
-        street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+        street: '', street2: '', city: '', state: 'VA', zip: '', phone: '', license: '',
       },
     },
     buyer: {
       firstName: '', middleName: '', lastName: '',
-      street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      street: '', street2: '', city: '', state: 'VA', zip: '', phone: '', license: '',
       skipFill: false,
       hasCoOwner: false,
       coOwnerSameAddress: false,
       coOwner: {
         firstName: '', middleName: '', lastName: '',
-        street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+        street: '', street2: '', city: '', state: 'VA', zip: '', phone: '', license: '',
       },
     },
     sale: {

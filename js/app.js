@@ -302,7 +302,8 @@ function renderField(field) {
       if (/\.zip$/.test(field.path)) input.autocomplete = 'postal-code';
       else if (/\.city$/.test(field.path)) input.autocomplete = 'address-level2';
       else if (/\.state$/.test(field.path)) input.autocomplete = 'address-level1';
-      else if (/\.street$/.test(field.path)) input.autocomplete = 'street-address';
+      else if (/\.street$/.test(field.path)) input.autocomplete = 'address-line1';
+      else if (/\.street2$/.test(field.path)) input.autocomplete = 'address-line2';
       else if (/\.firstName$/.test(field.path)) input.autocomplete = 'given-name';
       else if (/\.middleName$/.test(field.path)) input.autocomplete = 'additional-name';
       else if (/\.lastName$/.test(field.path)) input.autocomplete = 'family-name';
