@@ -15,8 +15,9 @@ export const COPY = {
     subtitleTemplate: "{honorific} of {name}",
     subtitleNoHonorific: "{name}",
     footerDisclaimerTemplate: "Not a substitute for {name} DMV title transfer requirements.",
-    // Shown before the user has picked a state (header subtitle is suppressed,
-    // footer falls back to this generic line).
+    // Shown before the user has picked a state (so the header keeps its
+    // height and the page doesn't reflow once a state is committed).
+    subtitleNoState: "Select a state",
     footerDisclaimerNoState: "Not legal advice. Verify with your state DMV before relying on this document.",
   },
   actions: {

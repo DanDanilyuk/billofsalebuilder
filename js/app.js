@@ -112,10 +112,11 @@ function applyStateChrome() {
   const sub = document.querySelector('[data-state-subtitle]');
   const dis = document.querySelector('[data-page-disclaimer]');
 
-  // No state picked yet: neutral chrome. Empty subtitle and a generic
-  // footer disclaimer so the page doesn't pretend to know the jurisdiction.
+  // No state picked yet: neutral chrome. Subtitle reads a placeholder so the
+  // header keeps its height and the page doesn't reflow once a state is
+  // committed. Footer falls back to a generic line.
   if (!abbr) {
-    if (sub) sub.textContent = '';
+    if (sub) sub.textContent = COPY.app.subtitleNoState;
     if (dis) dis.textContent = COPY.app.footerDisclaimerNoState;
     return;
   }
