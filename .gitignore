@@ -6,3 +6,10 @@ TASK_LIST.md
 docs/superpowers/
 CLAUDE.md
 domain_options.md
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
