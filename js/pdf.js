@@ -1,16 +1,18 @@
 // js/pdf.js
 //
-// Builds a Virginia Vehicle Bill of Sale PDF using jsPDF (vendored at
+// Builds a Vehicle Bill of Sale PDF using jsPDF (vendored at
 // lib/jspdf.umd.min.js, exposed on window.jspdf). Helvetica + Courier
 // only (no custom font embedding for v1).
 //
 // Public API:
 //   buildBillOfSalePdf(state) -> Blob
 //
-// Reads from the shared state schema documented in
-// docs/superpowers/plans/2026-05-07-va-bill-of-sale.md ("Shared contract").
+// Reads from the shared state schema (vehicle / seller / buyer / sale /
+// meta) and adapts title block, odometer cert, optional notary block, and
+// footer to the jurisdiction recorded at `state.meta.usState`.
 
 import { COPY } from './copy.js';
+import { getState } from './states.js';
 
 // Page geometry (US Letter at 72dpi, 0.75" margins).
 const MARGIN = 54;
@@ -32,8 +34,10 @@ const SECTION_GAP = 18;       // gap between sections
 
 // Body indent (relative to MARGIN).
 const BODY_INDENT = MARGIN + 14;
-const LABEL_W = 86;           // width of inline labels like "Address:"
-const VALUE_W = CONTENT_W - 14 - LABEL_W;
+const LABEL_W = 86;           // default width of inline labels like "Address:"
+// Notary labels ("Commission expires:") are too long for the 86pt column;
+// the notary block widens its label gutter via drawRow's `labelW` override.
+const NOTARY_LABEL_W = 120;
 
 // Static lookups.
 const TYPE_LABEL = { motor: 'Motor vehicle', trailer: 'Trailer', boat: 'Boat' };
@@ -53,18 +57,30 @@ function setStroke(doc, rgb) {
   doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
 }
 
+// COPY key reads tolerate either the legacy numeric layout (step1 / step4)
+// or the semantic layout shipped by wizard-engineer (vehicle / sale).
+// Whichever is present wins; this keeps pdf.js working through the
+// rename rollout without coupling shipping order.
+function vehicleCopy() {
+  return COPY.vehicle || COPY.step1 || {};
+}
+
+function saleCopy() {
+  return COPY.sale || COPY.step4 || {};
+}
+
 function subTypeLabel(vehicle) {
   if (!vehicle.subType) return '';
   if (vehicle.subType === 'other') {
     return vehicle.subTypeOther?.trim() || 'Other';
   }
-  const map = COPY.step1?.subType?.[vehicle.type] || {};
+  const map = vehicleCopy().subType?.[vehicle.type] || {};
   return map[vehicle.subType] || vehicle.subType;
 }
 
 function hullMaterialLabel(key) {
   if (!key) return '';
-  const opts = COPY.step1?.hullMaterial?.options || {};
+  const opts = vehicleCopy().hullMaterial?.options || {};
   return opts[key] || key;
 }
 
@@ -72,7 +88,7 @@ function paymentLabel(sale) {
   if (sale.payment === 'other') {
     return sale.paymentOther?.trim() || 'Other';
   }
-  const opts = COPY.step4?.payment?.options || {};
+  const opts = saleCopy().payment?.options || {};
   return opts[sale.payment] || sale.payment || '';
 }
 
@@ -109,24 +125,28 @@ function drawSectionHeading(doc, y, label) {
 }
 
 // Draws "Label:  value" where the value may wrap. Returns the new y.
-//   opts.mono: true   - render the value in Courier (used for VIN/HIN)
-//   opts.blank: true  - draw a horizontal underline at the value column
-//                       instead of text (used when a section is left blank
-//                       for handwriting)
+//   opts.mono: true     - render the value in Courier (used for VIN/HIN)
+//   opts.blank: true    - draw a horizontal underline at the value column
+//                         instead of text (used when a section is left blank
+//                         for handwriting)
+//   opts.labelW: number - override the default label gutter width (used by
+//                         the notary block whose labels are wider)
 function drawRow(doc, y, label, value, opts = {}) {
   const text = value == null ? '' : String(value);
   doc.setFont('helvetica', 'normal').setFontSize(10);
   setColor(doc, MUTED);
   doc.text(label, BODY_INDENT, y);
 
-  const valueX = BODY_INDENT + LABEL_W;
+  const labelW = opts.labelW || LABEL_W;
+  const valueW = CONTENT_W - 14 - labelW;
+  const valueX = BODY_INDENT + labelW;
 
   if (opts.blank) {
     setStroke(doc, INK);
     doc.setLineWidth(0.5);
     // Sit the line slightly below the label baseline so it reads as a
     // writing line, not a strikethrough.
-    doc.line(valueX, y + 2, valueX + VALUE_W, y + 2);
+    doc.line(valueX, y + 2, valueX + valueW, y + 2);
     return y + BODY_LINE_H;
   }
 
@@ -137,7 +157,7 @@ function drawRow(doc, y, label, value, opts = {}) {
   }
   setColor(doc, INK);
 
-  const lines = text === '' ? [''] : doc.splitTextToSize(text, VALUE_W);
+  const lines = text === '' ? [''] : doc.splitTextToSize(text, valueW);
   lines.forEach((line, i) => {
     doc.text(line, valueX, y + i * BODY_LINE_H);
   });
@@ -226,22 +246,54 @@ function drawSale(doc, y, sale) {
   return y + SECTION_GAP;
 }
 
-function drawAck(doc, y, sale, vehicle) {
+function drawAck(doc, y, sale, vehicle, usState) {
   y = drawSectionHeading(doc, y, COPY.pdf.ackHeading);
   doc.setFont('helvetica', 'normal').setFontSize(10);
   setColor(doc, INK);
   let body = sale.payment === 'gift' ? COPY.pdf.ackBodyGift : COPY.pdf.ackBody;
+
   // Federal odometer disclosure applies to motor vehicles regardless of
-  // consideration (sale or gift), so append the certification sentence on
-  // motor PDFs only. Guarded so a missing copy key is non-fatal.
-  if (vehicle?.type === 'motor' && COPY.pdf.ackOdoCert) {
+  // consideration (sale or gift). Vehicles older than the state's
+  // odometer-disclosure threshold (post-2021 federal default: 20 model
+  // years) drop the certification sentence.
+  const vehicleYearNum = parseInt(vehicle?.year, 10);
+  const currentYear = new Date().getFullYear();
+  const ageYears = Number.isFinite(vehicleYearNum)
+    ? (currentYear - vehicleYearNum)
+    : 0;
+  const threshold = Number.isFinite(usState?.odometerThresholdYears)
+    ? usState.odometerThresholdYears
+    : 20;
+  const odoNeeded = vehicle?.type === 'motor' && ageYears <= threshold;
+  if (odoNeeded && COPY.pdf.ackOdoCert) {
     body = String(body).trim() + ' ' + COPY.pdf.ackOdoCert;
   }
+
   const lines = doc.splitTextToSize(body, CONTENT_W - 14);
   lines.forEach((line, i) => {
     doc.text(line, BODY_INDENT, y + i * ACK_LINE_H);
   });
   return y + lines.length * ACK_LINE_H + SECTION_GAP;
+}
+
+function drawNotary(doc, y, usState) {
+  // usState reserved for future per-state notary copy variants (e.g.
+  // "Acknowledged before me on..." vs jurat). For v1 the body is generic.
+  void usState;
+  const heading = COPY.pdf.notaryHeading || 'NOTARIZATION';
+  const rows = COPY.pdf.notaryRows || {
+    stateCounty: 'State & County:',
+    date: 'Date:',
+    notarySig: 'Notary signature:',
+    commission: 'Commission expires:',
+  };
+  y = drawSectionHeading(doc, y, heading);
+  const opts = { blank: true, labelW: NOTARY_LABEL_W };
+  y = drawRow(doc, y, rows.stateCounty, '', opts);
+  y = drawRow(doc, y, rows.date, '', opts);
+  y = drawRow(doc, y, rows.notarySig, '', opts);
+  y = drawRow(doc, y, rows.commission, '', opts);
+  return y + SECTION_GAP;
 }
 
 function drawSignatures(doc, y) {
@@ -276,12 +328,26 @@ function drawSignatures(doc, y) {
   return lineY + labelOffset + SECTION_GAP;
 }
 
-function drawFooter(doc) {
+function drawFooter(doc, usState) {
   const stamp = new Date().toLocaleString();
-  const text = (COPY.pdf.footerDisclaimer || '').replace('{timestamp}', stamp);
+  const stateName = usState?.name || 'state';
+  const formRef = usState?.bosFormName ? `(${usState.bosFormName}) ` : '';
+  const dmvUrl = usState?.dmvUrl || '';
+  const tail = dmvUrl ? ` ${dmvUrl}` : '';
+  const text = `Generated ${stamp}. Not a substitute for ${stateName} ${formRef}DMV title transfer requirements.${tail}`;
+
   doc.setFont('helvetica', 'normal').setFontSize(8);
   setColor(doc, MUTED);
-  doc.text(text, PAGE_W / 2, PAGE_H - 36, { align: 'center' });
+
+  const lines = doc.splitTextToSize(text, CONTENT_W);
+  const lineH = 10;
+  // Anchor the LAST line at PAGE_H - 36 so additional lines stack upward
+  // and never run off the bottom of the page.
+  const lastY = PAGE_H - 36;
+  lines.forEach((line, i) => {
+    const y = lastY - (lines.length - 1 - i) * lineH;
+    doc.text(line, PAGE_W / 2, y, { align: 'center' });
+  });
   setColor(doc, INK);
 }
 
@@ -292,6 +358,12 @@ export function buildBillOfSalePdf(state) {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   let y = MARGIN;
 
+  const usState = getState(state.meta?.usState || 'VA');
+  const subtitle = usState.honorific
+    ? `${usState.honorific} of ${usState.name}`
+    : usState.name;
+  const includeNotary = state.sale?.includeNotary === true;
+
   // Title block
   doc.setFont('helvetica', 'bold').setFontSize(18);
   setColor(doc, INK);
@@ -300,7 +372,7 @@ export function buildBillOfSalePdf(state) {
 
   doc.setFont('helvetica', 'normal').setFontSize(11);
   setColor(doc, MUTED);
-  doc.text(COPY.pdf.subtitle, MARGIN, y);
+  doc.text(subtitle, MARGIN, y);
   setColor(doc, INK);
   doc.text(formatDateLong(state.sale.date), PAGE_W - MARGIN, y, { align: 'right' });
   y += 10;
@@ -314,10 +386,10 @@ export function buildBillOfSalePdf(state) {
   y = drawParty(doc, y, COPY.pdf.buyerHeading, state.buyer);
   y = drawVehicle(doc, y, state.vehicle);
   y = drawSale(doc, y, state.sale);
-  y = drawAck(doc, y, state.sale, state.vehicle);
+  y = drawAck(doc, y, state.sale, state.vehicle, usState);
 
-  // Reserve room for the signature block + footer; if it won't fit, push to
-  // a new page and re-anchor.
+  // Reserve room for the optional notary block + signature block + footer;
+  // if it won't fit, push to a new page and re-anchor.
   const SIG_BLOCK_HEIGHT = 14    // heading row
                          + 30    // top space for first line
                          + 11    // first label
@@ -325,15 +397,21 @@ export function buildBillOfSalePdf(state) {
                          + 30    // top space for second line
                          + 11    // second label
                          + SECTION_GAP;
-  const FOOTER_RESERVE = 60;
-  if (y + SIG_BLOCK_HEIGHT > PAGE_H - FOOTER_RESERVE) {
+  const NOTARY_BLOCK_HEIGHT = includeNotary
+    ? (HEADING_GAP + 4 * BODY_LINE_H + SECTION_GAP)
+    : 0;
+  const FOOTER_RESERVE = 60;     // extra room if footer text wraps to 2-3 lines
+  if (y + NOTARY_BLOCK_HEIGHT + SIG_BLOCK_HEIGHT > PAGE_H - FOOTER_RESERVE) {
     doc.addPage();
     y = MARGIN;
+  }
+  if (includeNotary) {
+    y = drawNotary(doc, y, usState);
   }
   y = drawSignatures(doc, y);
 
   // Footer is anchored to the bottom of the current (last) page.
-  drawFooter(doc);
+  drawFooter(doc, usState);
 
   return doc.output('blob');
 }

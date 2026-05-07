@@ -9,8 +9,15 @@
 export const COPY = {
   app: {
     title: "Vehicle Bill of Sale",
-    subtitle: "Commonwealth of Virginia",
-    footerDisclaimer: "Not a substitute for Virginia DMV title transfer requirements.",
+    // Subtitle is rendered dynamically by app.js using the selected state's
+    // honorific and name (e.g. "Commonwealth of Virginia", "State of California",
+    // "District of Columbia").
+    subtitleTemplate: "{honorific} of {name}",
+    subtitleNoHonorific: "{name}",
+    footerDisclaimerTemplate: "Not a substitute for {name} DMV title transfer requirements.",
+    // Shown before the user has picked a state (header subtitle is suppressed,
+    // footer falls back to this generic line).
+    footerDisclaimerNoState: "Not legal advice. Verify with your state DMV before relying on this document.",
   },
   actions: {
     back: "Back",
@@ -19,7 +26,55 @@ export const COPY = {
     download: "Download PDF",
     backToEdit: "Back to edit",
   },
-  step1: {
+  // Per-step chrome (eyebrow / title / sub). app.js writes these onto the
+  // empty [data-step-*] attributes when a step renders. titleTemplate steps
+  // (you / other) substitute {role} with the party label at render time.
+  wizard: {
+    steps: {
+      setup: {
+        eyebrow: "Step 1 of 6",
+        title: "Setup",
+        sub: "Pick a state and your role.",
+      },
+      you: {
+        eyebrow: "Step 2 of 6",
+        titleTemplate: "Your information ({role})",
+        sub: "Your contact details.",
+      },
+      other: {
+        eyebrow: "Step 3 of 6",
+        titleTemplate: "Other party ({role})",
+        sub: "Their contact details, or skip and leave blank for handwriting.",
+      },
+      vehicle: {
+        eyebrow: "Step 4 of 6",
+        title: "Vehicle",
+        sub: "What's being sold.",
+      },
+      sale: {
+        eyebrow: "Step 5 of 6",
+        title: "Sale terms",
+        sub: "Price, date, and payment.",
+      },
+      review: {
+        eyebrow: "Step 6 of 6",
+        title: "Review & download",
+        sub: "Verify the document below, then download.",
+      },
+    },
+  },
+  meta: {
+    usState: { label: "Which US state?", req: true },
+    role: {
+      label: "I am the...",
+      req: true,
+      options: {
+        seller: "Seller",
+        buyer: "Buyer",
+      },
+    },
+  },
+  vehicle: {
     title: "Vehicle",
     sub: "What's being sold.",
     type: {
@@ -118,20 +173,20 @@ export const COPY = {
     license: {
       label: "Driver's license / ID number (optional)",
       req: false,
-      hint: "Helps Virginia DMV match the title.",
+      hint: "Helps the DMV match the title.",
     },
   },
-  step2: {
+  seller: {
     title: "Seller",
     sub: "Who is selling the vehicle.",
     skipFill: { label: "Skip - leave seller blank for handwriting", req: false },
   },
-  step3: {
+  buyer: {
     title: "Buyer",
     sub: "Who is purchasing the vehicle.",
     skipFill: { label: "Skip - leave buyer blank for handwriting", req: false },
   },
-  step4: {
+  sale: {
     title: "Sale terms",
     sub: "Price, date, and payment.",
     price: {
@@ -158,8 +213,9 @@ export const COPY = {
       req: true,
     },
     priceNegotiable: { label: "Negotiable - leave sale price blank", req: false },
+    includeNotary: { label: "Add notary block to the PDF", req: false },
   },
-  step5: {
+  review: {
     title: "Review & download",
     sub: "Verify the document below, then download.",
   },
@@ -173,6 +229,7 @@ export const COPY = {
     date: "Enter a valid date.",
     dateFuture: "Sale date can't be in the future.",
     phone: "Enter a 10-digit phone number.",
+    usState: "Pick a US state.",
   },
   pdf: {
     title: "VEHICLE BILL OF SALE",

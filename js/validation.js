@@ -29,6 +29,10 @@ export const validators = {
 
   zip: (v) => /^\d{5}(-\d{4})?$/.test(String(v).trim()) ? null : 'zip',
 
+  // Two-letter US state abbreviation (uppercase). The wizard's searchSelect
+  // commits values from STATES, but a validator backstops manual edits.
+  usState: (v) => /^[A-Z]{2}$/.test(String(v ?? '').trim()) ? null : 'usState',
+
   price: (v) => {
     const n = Number(v);
     return (Number.isFinite(n) && n >= 0 && n < 1e8) ? null : 'price';

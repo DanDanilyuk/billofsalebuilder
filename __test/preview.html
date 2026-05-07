@@ -91,8 +91,10 @@
 <body>
   <h1>PDF preview harness</h1>
   <p class="sub">
-    Renders <code>buildBillOfSalePdf(state)</code> against three hardcoded
-    sample states. Verify each iframe before signing off Task 3.
+    Renders <code>buildBillOfSalePdf(state)</code> against hardcoded sample
+    states covering each vehicle type plus jurisdiction-specific behaviors
+    (Commonwealth honorific, bare DC subtitle, optional notary block,
+    odometer-cert threshold).
   </p>
 
   <div id="grid" class="grid"></div>
@@ -104,9 +106,16 @@
 
     const today = new Date().toISOString().slice(0, 10);
 
+    const baseMeta = (usState, role = 'seller') => ({
+      version: 2,
+      usState,
+      role,
+      updatedAt: new Date().toISOString(),
+    });
+
     const samples = [
       {
-        name: 'Motor vehicle - cash sale',
+        name: 'Motor / cash / VA - "Commonwealth of Virginia", odo cert',
         state: {
           vehicle: {
             type: 'motor',
@@ -132,6 +141,7 @@
             zip: '23220',
             phone: '8045551234',
             license: 'A12345678',
+            skipFill: false,
           },
           buyer: {
             name: 'John P. Buyer',
@@ -141,6 +151,7 @@
             zip: '22902',
             phone: '4345559876',
             license: '',
+            skipFill: false,
           },
           sale: {
             price: '12500.00',
@@ -148,12 +159,15 @@
             payment: 'cash',
             paymentOther: '',
             asIsAck: true,
+            priceNegotiable: false,
+            includeNotary: false,
+            notaryUserSet: false,
           },
-          meta: { version: 1, updatedAt: new Date().toISOString() },
+          meta: baseMeta('VA', 'seller'),
         },
       },
       {
-        name: 'Trailer - check, no odometer',
+        name: 'Trailer / cash / CA - "State of California", no odo cert',
         state: {
           vehicle: {
             type: 'trailer',
@@ -174,33 +188,38 @@
           seller: {
             name: 'Marcus L. Henderson-Wright',
             street: '7821 Westmoreland Boulevard, Apt 4B',
-            city: 'Virginia Beach',
-            state: 'VA',
-            zip: '23456-7890',
+            city: 'Long Beach',
+            state: 'CA',
+            zip: '90802-1234',
             phone: '',
             license: '',
+            skipFill: false,
           },
           buyer: {
             name: 'Priya Subramanian',
             street: '15 Short Ln',
-            city: 'Norfolk',
-            state: 'VA',
-            zip: '23510',
-            phone: '7575551122',
+            city: 'San Diego',
+            state: 'CA',
+            zip: '92101',
+            phone: '6195551122',
             license: 'T98765432',
+            skipFill: false,
           },
           sale: {
             price: '3200.00',
             date: today,
-            payment: 'check',
+            payment: 'cash',
             paymentOther: '',
             asIsAck: true,
+            priceNegotiable: false,
+            includeNotary: false,
+            notaryUserSet: false,
           },
-          meta: { version: 1, updatedAt: new Date().toISOString() },
+          meta: baseMeta('CA', 'seller'),
         },
       },
       {
-        name: 'Boat - gift transfer',
+        name: 'Boat / gift / DC - bare "District of Columbia", notary block',
         state: {
           vehicle: {
             type: 'boat',
@@ -221,20 +240,22 @@
           seller: {
             name: 'Robert E. Lee Jr.',
             street: '1 Harbor Way',
-            city: 'Hampton',
-            state: 'VA',
-            zip: '23669',
-            phone: '7575550001',
+            city: 'Washington',
+            state: 'DC',
+            zip: '20001',
+            phone: '2025550001',
             license: '',
+            skipFill: false,
           },
           buyer: {
             name: 'Eleanor Lee',
             street: '1 Harbor Way',
-            city: 'Hampton',
-            state: 'VA',
-            zip: '23669',
+            city: 'Washington',
+            state: 'DC',
+            zip: '20001',
             phone: '',
             license: '',
+            skipFill: false,
           },
           sale: {
             price: '0',
@@ -242,8 +263,63 @@
             payment: 'gift',
             paymentOther: '',
             asIsAck: true,
+            priceNegotiable: false,
+            includeNotary: true,        // DC notary='recommended', auto-on
+            notaryUserSet: false,
           },
-          meta: { version: 1, updatedAt: new Date().toISOString() },
+          meta: baseMeta('DC', 'seller'),
+        },
+      },
+      {
+        name: 'Motor / financed / PA - notary required, block renders',
+        state: {
+          vehicle: {
+            type: 'motor',
+            year: '2022',
+            make: 'Ford',
+            model: 'F-150',
+            color: 'Blue',
+            subType: 'truck',
+            subTypeOther: '',
+            vin: '1FTFW1E50NFA12345',
+            hin: '',
+            length: '',
+            hullMaterial: '',
+            odometer: '18750',
+            odometerUnit: 'miles',
+            odometerStatus: 'actual',
+          },
+          seller: {
+            name: 'Anna Kowalski',
+            street: '402 Liberty Avenue',
+            city: 'Pittsburgh',
+            state: 'PA',
+            zip: '15222',
+            phone: '4125550199',
+            license: '',
+            skipFill: false,
+          },
+          buyer: {
+            name: 'Devon Martinez',
+            street: '88 Walnut St',
+            city: 'Philadelphia',
+            state: 'PA',
+            zip: '19106',
+            phone: '',
+            license: '',
+            skipFill: false,
+          },
+          sale: {
+            price: '38500.00',
+            date: today,
+            payment: 'financed',
+            paymentOther: '',
+            asIsAck: true,
+            priceNegotiable: false,
+            includeNotary: true,        // PA notary='required', auto-on
+            notaryUserSet: false,
+          },
+          meta: baseMeta('PA', 'seller'),
         },
       },
     ];

@@ -8,23 +8,60 @@
 //   path:      dot-path into state (e.g. 'vehicle.year')
 //   label:     visible label string (always pulled from COPY)
 //   req:       boolean - whether the required validator runs
-//   kind:      'text' | 'number' | 'date' | 'select' | 'radio' | 'checkbox'
+//   kind:      'text' | 'number' | 'date' | 'select' | 'radio' | 'checkbox' | 'searchSelect'
 //   options?:  { value: label } map for select/radio
+//   optionsKey?: data-source key for searchSelect (e.g. 'states' -> STATE_LIST)
 //   hint?:     helper text under the field
 //   validate?: array of validator names from validation.js
 //   mono?:     true to render with .input--mono (VIN/HIN style)
 //   showWhen?: (state) => boolean predicate for conditional visibility
+//   emphasis?: 'prominent' for checkbox -> applies .checkbox--prominent class
+//              (used for the skip-fill toggle on the "other party" step)
 
 import { COPY } from './copy.js';
+import { STATES } from './states.js';
 
-function partyFields(prefix) {
+// Step 2 binds to whichever party prefix matches the user's role; step 3
+// binds to the opposite. So role=seller -> Step 2 is seller, Step 3 is buyer.
+export function youPrefix(state)   { return state.meta?.role === 'buyer' ? 'buyer'  : 'seller'; }
+export function otherPrefix(state) { return state.meta?.role === 'buyer' ? 'seller' : 'buyer';  }
+
+function metaFields() {
+  const c = COPY.meta;
+  return [
+    {
+      path: 'meta.usState',
+      label: c.usState.label,
+      req: true,
+      kind: 'searchSelect',
+      optionsKey: 'states',
+      validate: ['usState'],
+    },
+    {
+      path: 'meta.role',
+      label: c.role.label,
+      req: true,
+      kind: 'radio',
+      options: c.role.options,
+    },
+  ];
+}
+
+function partyFields(prefix, opts = {}) {
   const p = COPY.parties;
-  const stepCopy = prefix === 'seller' ? COPY.step2 : COPY.step3;
+  const stepCopy = COPY[prefix] || {};
   // Skip-fill toggle leaves the section blank in the PDF for handwriting.
   // Used when the form printer doesn't have the counter-party's details yet.
   const notSkipped = (s) => !s[prefix].skipFill;
+  const skipField = {
+    path: `${prefix}.skipFill`,
+    label: stepCopy.skipFill?.label || '',
+    req: false,
+    kind: 'checkbox',
+  };
+  if (opts.prominent) skipField.emphasis = 'prominent';
   return [
-    { path: `${prefix}.skipFill`, label: stepCopy.skipFill.label, req: false, kind: 'checkbox' },
+    skipField,
     { path: `${prefix}.name`,    label: p.name.label,    req: !!p.name.req,    kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.street`,  label: p.street.label,  req: !!p.street.req,  kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.city`,    label: p.city.label,    req: !!p.city.req,    kind: 'text', showWhen: notSkipped },
@@ -37,7 +74,7 @@ function partyFields(prefix) {
 
 function vehicleFields(state) {
   const t = state.vehicle.type;
-  const c = COPY.step1;
+  const c = COPY.vehicle;
   const fields = [];
 
   fields.push({ path: 'vehicle.type', label: c.type.label, req: true, kind: 'radio', options: c.type.options });
@@ -115,9 +152,16 @@ function vehicleFields(state) {
   return fields;
 }
 
-function saleFields() {
-  const c = COPY.step4;
-  return [
+function saleFields(state) {
+  const c = COPY.sale;
+  const stateData = STATES[state.meta?.usState];
+  // Notary toggle hides for jurisdictions that don't use it. 'required' /
+  // 'recommended' / 'optional' all surface the checkbox; 'not_required' hides
+  // it (and forces the value off so a stale auto-default doesn't sneak it
+  // into the PDF).
+  const notaryNeeded = stateData ? stateData.notary !== 'not_required' : true;
+
+  const fields = [
     // Negotiable toggle hides the price field and renders a blank line in the
     // PDF. Only meaningful when payment isn't a gift (gifts already skip price).
     {
@@ -139,15 +183,27 @@ function saleFields() {
     },
     { path: 'sale.asIsAck', label: c.asIsAck.label, req: true, kind: 'checkbox' },
   ];
+
+  if (notaryNeeded) {
+    fields.push({
+      path: 'sale.includeNotary',
+      label: c.includeNotary.label,
+      req: false,
+      kind: 'checkbox',
+    });
+  }
+
+  return fields;
 }
 
 export function fieldsForStep(stepNumber, state) {
   let raw;
   switch (stepNumber) {
-    case 1: raw = vehicleFields(state); break;
-    case 2: raw = partyFields('seller'); break;
-    case 3: raw = partyFields('buyer'); break;
-    case 4: raw = saleFields(); break;
+    case 1: raw = metaFields();                                      break;
+    case 2: raw = partyFields(youPrefix(state));                     break;
+    case 3: raw = partyFields(otherPrefix(state), { prominent: true }); break;
+    case 4: raw = vehicleFields(state);                              break;
+    case 5: raw = saleFields(state);                                 break;
     default: raw = [];
   }
   return raw.filter((f) => !f.showWhen || f.showWhen(state));

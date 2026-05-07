@@ -9,17 +9,32 @@
 //   - Inline errors live in <div class="field__error"> inside the wrapper.
 //   - Adding `is-error` to the wrapper reveals the error text.
 //   - VIN/HIN inputs use .input--mono.
+//
+// Step layout (6 steps total):
+//   1: Setup     - state (searchSelect) + role (radio)
+//   2: You       - whichever party matches role
+//   3: Other     - opposite party (with prominent skip-fill button)
+//   4: Vehicle
+//   5: Sale      - includes optional notary toggle (state-aware)
+//   6: Review    - PDF preview + download
 
 import { COPY } from './copy.js';
 import { defaultState, loadState, saveState, clearState } from './storage.js';
-import { fieldsForStep } from './fields.js';
+import { fieldsForStep, youPrefix, otherPrefix } from './fields.js';
 import { validators } from './validation.js';
 import { buildBillOfSalePdf } from './pdf.js';
 import { decodeVin } from './vin-decoder.js';
+import { STATES, STATE_LIST, getState } from './states.js';
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
+
 // Path changes that may add/remove conditional fields - require a re-render.
+// meta.role swaps Step 2/3 binding (you vs other party).
+// meta.usState toggles the notary checkbox visibility on Step 5 and rewrites
+// the page header subtitle / footer disclaimer.
 const RERENDER_PATHS = new Set([
+  'meta.role',
+  'meta.usState',
   'vehicle.type',
   'vehicle.subType',
   'sale.payment',
@@ -27,6 +42,17 @@ const RERENDER_PATHS = new Set([
   'seller.skipFill',
   'buyer.skipFill',
 ]);
+
+// Step number -> chrome key in COPY.wizard.steps. Drives applyDynamicChrome().
+const STEP_KEY_BY_NUMBER = {
+  1: 'setup',
+  2: 'you',
+  3: 'other',
+  4: 'vehicle',
+  5: 'sale',
+  6: 'review',
+};
+
 const VIN_FORMAT = /^[A-HJ-NPR-Z0-9]{17}$/;
 const VIN_DEBOUNCE_MS = 250;
 const VIN_DECODED_REVERT_MS = 3000;
@@ -41,6 +67,7 @@ let vinDecodeTimer = null;  // debounce timer
 
 function init() {
   bindActions();
+  bindGlobalSearchSelectClose();
   renderStep(currentStep);
 }
 
@@ -50,6 +77,8 @@ function renderStep(n) {
   document.querySelectorAll('.step').forEach((el) => {
     el.hidden = Number(el.dataset.step) !== n;
   });
+  applyDynamicChrome(n);
+  applyStateChrome();
   if (n === TOTAL_STEPS) {
     renderPreview();
   } else {
@@ -57,6 +86,55 @@ function renderStep(n) {
   }
   updateActions(n);
   updateProgress();
+}
+
+function applyDynamicChrome(n) {
+  const sec = document.querySelector(`.step[data-step="${n}"]`);
+  if (!sec) return;
+  const stepKey = STEP_KEY_BY_NUMBER[n];
+  const stepCopy = COPY.wizard?.steps?.[stepKey];
+  if (!stepCopy) return;
+
+  let title = stepCopy.title || '';
+  if (stepCopy.titleTemplate) {
+    const partyKey = (stepKey === 'you') ? youPrefix(state) : otherPrefix(state);
+    const partyLabel = COPY.meta.role.options[partyKey] || '';
+    title = stepCopy.titleTemplate.replace('{role}', partyLabel);
+  }
+
+  setText(sec, '[data-step-eyebrow]', stepCopy.eyebrow || '');
+  setText(sec, '[data-step-title]', title);
+  setText(sec, '[data-step-sub]', stepCopy.sub || '');
+}
+
+function applyStateChrome() {
+  const abbr = state.meta?.usState || '';
+  const sub = document.querySelector('[data-state-subtitle]');
+  const dis = document.querySelector('[data-page-disclaimer]');
+
+  // No state picked yet: neutral chrome. Empty subtitle and a generic
+  // footer disclaimer so the page doesn't pretend to know the jurisdiction.
+  if (!abbr) {
+    if (sub) sub.textContent = '';
+    if (dis) dis.textContent = COPY.app.footerDisclaimerNoState;
+    return;
+  }
+
+  const stateData = getState(abbr);
+  const subtitle = stateData.honorific
+    ? COPY.app.subtitleTemplate
+        .replace('{honorific}', stateData.honorific)
+        .replace('{name}', stateData.name)
+    : COPY.app.subtitleNoHonorific.replace('{name}', stateData.name);
+  if (sub) sub.textContent = subtitle;
+  if (dis) {
+    dis.textContent = COPY.app.footerDisclaimerTemplate.replace('{name}', stateData.name);
+  }
+}
+
+function setText(scope, selector, value) {
+  const el = scope.querySelector(selector);
+  if (el) el.textContent = value;
 }
 
 function renderForm(n) {
@@ -68,7 +146,10 @@ function renderForm(n) {
 
   // Bind 'input' for typed fields (fires per-keystroke, keeps state fresh)
   // and 'change' for radio/checkbox/select (fires once on selection).
-  form.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]').forEach((el) => {
+  // Hidden inputs (used by searchSelect anchors) listen on 'input' too.
+  form.querySelectorAll(
+    'input[type="text"], input[type="number"], input[type="date"], input[type="hidden"]'
+  ).forEach((el) => {
     el.addEventListener('input', onFieldChange);
   });
   form.querySelectorAll('input[type="radio"], input[type="checkbox"], select').forEach((el) => {
@@ -86,7 +167,9 @@ function renderField(field) {
     const group = document.createElement('div');
     group.className = 'checkbox-group';
     const lbl = document.createElement('label');
-    lbl.className = 'checkbox' + (value ? ' is-selected' : '');
+    let cls = 'checkbox' + (value ? ' is-selected' : '');
+    if (field.emphasis === 'prominent') cls += ' checkbox--prominent';
+    lbl.className = cls;
     const input = document.createElement('input');
     input.type = 'checkbox';
     input.dataset.path = field.path;
@@ -148,6 +231,8 @@ function renderField(field) {
         sel.appendChild(opt);
       });
       wrap.appendChild(sel);
+    } else if (field.kind === 'searchSelect') {
+      wrap.appendChild(buildSearchSelect(field, value));
     } else {
       // text, number, date
       const input = document.createElement('input');
@@ -186,6 +271,212 @@ function renderField(field) {
   return wrap;
 }
 
+// ---- searchSelect (filterable popover) ----------------------------------
+//
+// Renders a text input + ul popover. The hidden anchor input carries the
+// committed value (state abbr) and a data-path so the existing onFieldChange
+// flow picks it up: setByPath -> saveState -> RERENDER_PATHS -> renderForm.
+//
+// Currently only used for the meta.usState picker (optionsKey='states').
+
+function buildSearchSelect(field, currentValue) {
+  const optionsData = optionsForKey(field.optionsKey);
+  const container = document.createElement('div');
+  container.className = 'searchselect';
+
+  const input = document.createElement('input');
+  input.className = 'input searchselect__input';
+  input.type = 'text';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.placeholder = 'Type a state name...';
+  input.setAttribute('aria-autocomplete', 'list');
+
+  const list = document.createElement('ul');
+  list.className = 'searchselect__list';
+  list.hidden = true;
+  list.setAttribute('role', 'listbox');
+
+  const optionEls = optionsData.map((s) => {
+    const li = document.createElement('li');
+    li.className = 'searchselect__option';
+    li.setAttribute('role', 'option');
+    li.dataset.value = s.abbr;
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = s.name;
+    li.appendChild(nameSpan);
+    const abbrSpan = document.createElement('span');
+    abbrSpan.className = 'abbr';
+    abbrSpan.textContent = s.abbr;
+    li.appendChild(abbrSpan);
+    return li;
+  });
+  optionEls.forEach((o) => list.appendChild(o));
+
+  // Hidden anchor: the wizard's onFieldChange listens for this via data-path.
+  const anchor = document.createElement('input');
+  anchor.type = 'hidden';
+  anchor.dataset.path = field.path;
+  anchor.value = currentValue || '';
+  anchor.className = 'searchselect__anchor';
+
+  container.appendChild(input);
+  container.appendChild(list);
+  container.appendChild(anchor);
+
+  // Show the current state's full name in the visible input.
+  const initialMatch = optionsData.find((s) => s.abbr === currentValue);
+  if (initialMatch) input.value = initialMatch.name;
+
+  let highlighted = -1;
+
+  function visibleOptions() {
+    return optionEls.filter((o) => !o.hidden);
+  }
+
+  function setHighlight(idx) {
+    optionEls.forEach((o) => o.setAttribute('aria-selected', 'false'));
+    const visible = visibleOptions();
+    if (visible.length === 0) { highlighted = -1; return; }
+    highlighted = ((idx % visible.length) + visible.length) % visible.length;
+    const target = visible[highlighted];
+    target.setAttribute('aria-selected', 'true');
+    target.scrollIntoView({ block: 'nearest' });
+  }
+
+  function openList() {
+    list.hidden = false;
+  }
+  function closeList() {
+    list.hidden = true;
+    highlighted = -1;
+    optionEls.forEach((o) => o.setAttribute('aria-selected', 'false'));
+  }
+
+  function filterOptions(query) {
+    const q = String(query || '').trim().toLowerCase();
+    optionEls.forEach((o) => {
+      const s = optionsData.find((opt) => opt.abbr === o.dataset.value);
+      const matches = !q
+        || (s && s.name.toLowerCase().includes(q))
+        || (s && s.abbr.toLowerCase().includes(q));
+      o.hidden = !matches;
+    });
+    // Don't auto-highlight on filter change. Enter/Tab fall back to the first
+    // visible match when nothing is highlighted (handled in keydown), so users
+    // who type "Virginia" + Enter commit Virginia and ArrowDown moves the
+    // highlight to index 0 (Virginia) rather than skipping past it.
+    optionEls.forEach((o) => o.setAttribute('aria-selected', 'false'));
+    highlighted = -1;
+  }
+
+  function commit(abbr) {
+    const obj = optionsData.find((s) => s.abbr === abbr);
+    if (!obj) return;
+    input.value = obj.name;
+    anchor.value = abbr;
+    closeList();
+    // Drives onFieldChange (data-path on the hidden anchor).
+    anchor.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function revertInputToCurrent() {
+    const obj = optionsData.find((s) => s.abbr === anchor.value);
+    // When no state is committed yet, fall back to an empty input so the
+    // placeholder shows again (instead of leaving stale typed text behind).
+    input.value = obj ? obj.name : '';
+  }
+
+  input.addEventListener('focus', () => {
+    filterOptions('');
+    openList();
+  });
+  input.addEventListener('input', () => {
+    filterOptions(input.value);
+    openList();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (list.hidden && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+      filterOptions(input.value);
+      openList();
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlight(highlighted + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight(highlighted - 1);
+    } else if (e.key === 'Enter') {
+      const visible = visibleOptions();
+      if (visible.length === 0) return;
+      e.preventDefault();
+      // If the user has explicitly highlighted a row, commit that. Otherwise
+      // commit the first visible match - so "Virginia" + Enter commits
+      // Virginia rather than skipping over it.
+      const target = (highlighted >= 0 && visible[highlighted]) ? visible[highlighted] : visible[0];
+      commit(target.dataset.value);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeList();
+      revertInputToCurrent();
+      input.blur();
+    } else if (e.key === 'Tab') {
+      // On Tab, accept the highlighted option if any so a quick type-and-tab
+      // workflow commits cleanly. With no highlight, fall back to the first
+      // visible match when the user has typed something - that preserves the
+      // "Virginia" + Tab typeahead path. An empty input on Tab just reverts.
+      const visible = visibleOptions();
+      if (highlighted >= 0 && visible[highlighted]) {
+        commit(visible[highlighted].dataset.value);
+      } else if (visible.length > 0 && input.value.trim() !== '') {
+        commit(visible[0].dataset.value);
+      } else {
+        revertInputToCurrent();
+        closeList();
+      }
+    }
+  });
+  // Use mousedown so the click commits before the input's blur fires (which
+  // would otherwise revert the value).
+  list.addEventListener('mousedown', (e) => {
+    const li = e.target.closest('.searchselect__option');
+    if (!li) return;
+    e.preventDefault();
+    commit(li.dataset.value);
+  });
+
+  return container;
+}
+
+function optionsForKey(key) {
+  if (key === 'states') return STATE_LIST;
+  return [];
+}
+
+// Single delegated listener: closes any open searchselect popover when the
+// user clicks outside it. Registered once at init so we don't leak listeners
+// across renderForm calls.
+function bindGlobalSearchSelectClose() {
+  document.addEventListener('mousedown', (e) => {
+    document.querySelectorAll('.searchselect').forEach((ss) => {
+      if (ss.contains(e.target)) return;
+      const list = ss.querySelector('.searchselect__list');
+      if (!list || list.hidden) return;
+      list.hidden = true;
+      list.querySelectorAll('.searchselect__option[aria-selected="true"]')
+        .forEach((o) => o.setAttribute('aria-selected', 'false'));
+      const input = ss.querySelector('.searchselect__input');
+      const anchor = ss.querySelector('.searchselect__anchor');
+      if (input && anchor) {
+        const obj = STATES[anchor.value];
+        input.value = obj ? obj.name : '';
+      }
+    });
+  });
+}
+
 // ---- event handling ------------------------------------------------------
 
 function onFieldChange(e) {
@@ -193,12 +484,23 @@ function onFieldChange(e) {
   if (!path) return;
   const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
   setByPath(state, path, value);
+
+  // Side effects that have to land before saveState / re-render.
+  if (path === 'sale.includeNotary') {
+    state.sale.notaryUserSet = true;
+  }
+  if (path === 'meta.usState') {
+    applyNotaryAutoDefault();
+  }
+
   saveState(state);
   clearFieldError(e.target);
 
   if (path === 'vehicle.vin') triggerVinDecode();
 
   if (RERENDER_PATHS.has(path)) {
+    applyDynamicChrome(currentStep);
+    applyStateChrome();
     renderForm(currentStep);
     return;
   }
@@ -219,6 +521,18 @@ function onFieldChange(e) {
   }
 }
 
+// When the user picks a US state, flip includeNotary on iff the state requires
+// or recommends notarization AND the user hasn't explicitly toggled the
+// checkbox themselves. Once notaryUserSet is true, this auto-default is a
+// no-op for the rest of the session.
+function applyNotaryAutoDefault() {
+  if (state.sale.notaryUserSet) return;
+  const stateData = STATES[state.meta?.usState];
+  if (!stateData) return;
+  state.sale.includeNotary = stateData.notary === 'required'
+    || stateData.notary === 'recommended';
+}
+
 // ---- VIN decoding --------------------------------------------------------
 
 function triggerVinDecode() {
@@ -232,7 +546,7 @@ function triggerVinDecode() {
 
 async function runVinDecode(vin, type) {
   const myToken = ++vinDecodeToken;
-  setVinHint(COPY.step1?.vin?.status?.decoding || '');
+  setVinHint(COPY.vehicle?.vin?.status?.decoding || '');
 
   let decoded = null;
   try {
@@ -254,7 +568,7 @@ async function runVinDecode(vin, type) {
     }
     saveState(state);
     renderForm(currentStep);
-    setVinHint(COPY.step1?.vin?.status?.failed || '');
+    setVinHint(COPY.vehicle?.vin?.status?.failed || '');
     refocusVin();
     return;
   }
@@ -272,13 +586,13 @@ async function runVinDecode(vin, type) {
   // Re-render so the (possibly new) vehicle.type's field set + conditional
   // fields (e.g. subTypeOther) appear/hide correctly. Restore focus to VIN.
   renderForm(currentStep);
-  setVinHint(COPY.step1?.vin?.status?.decoded || '');
+  setVinHint(COPY.vehicle?.vin?.status?.decoded || '');
 
   refocusVin();
 
   setTimeout(() => {
     if (String(state.vehicle.vin || '').toUpperCase() !== vin) return;
-    setVinHint(COPY.step1?.vin?.hint || '');
+    setVinHint(COPY.vehicle?.vin?.hint || '');
   }, VIN_DECODED_REVERT_MS);
 }
 
@@ -424,7 +738,8 @@ function downloadFilename() {
     .filter((t) => t && !SUFFIX.test(t.replace(/,$/, '')));
   const last = (tokens.pop() || 'seller').toLowerCase().replace(/[^a-z0-9]/g, '');
   const date = state.sale?.date || new Date().toISOString().slice(0, 10);
-  return `va-bill-of-sale-${last || 'seller'}-${date}.pdf`;
+  const prefix = String(state.meta?.usState || 'va').toLowerCase();
+  return `${prefix}-bill-of-sale-${last || 'seller'}-${date}.pdf`;
 }
 
 // ---- helpers -------------------------------------------------------------
