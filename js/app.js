@@ -41,6 +41,10 @@ const RERENDER_PATHS = new Set([
   'sale.priceNegotiable',
   'seller.skipFill',
   'buyer.skipFill',
+  'seller.hasCoOwner',
+  'buyer.hasCoOwner',
+  'seller.coOwnerSameAddress',
+  'buyer.coOwnerSameAddress',
 ]);
 
 // Step number -> chrome key in COPY.wizard.steps. Drives applyDynamicChrome().

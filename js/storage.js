@@ -33,10 +33,20 @@ export function defaultState() {
     seller: {
       name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
       skipFill: false,
+      // Joint-title support: when hasCoOwner is true, the form shows a second
+      // set of fields for the co-owner and the PDF prints them.
+      // coOwnerSameAddress mirrors the primary's address into the co-owner
+      // row in the PDF and hides the redundant inputs.
+      hasCoOwner: false,
+      coOwnerSameAddress: false,
+      coOwner: { name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '' },
     },
     buyer: {
       name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
       skipFill: false,
+      hasCoOwner: false,
+      coOwnerSameAddress: false,
+      coOwner: { name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '' },
     },
     sale: {
       price: '',

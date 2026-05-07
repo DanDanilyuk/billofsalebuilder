@@ -166,6 +166,27 @@ function drawRow(doc, y, label, value, opts = {}) {
 
 // ---- section drawers ------------------------------------------------------
 
+function partyAddressLine(p) {
+  if (!p) return '';
+  const cityStateZip = [
+    p.city?.trim() || '',
+    [p.state?.trim() || '', p.zip?.trim() || ''].filter(Boolean).join(' '),
+  ].filter(Boolean).join(', ');
+  return [p.street?.trim() || '', cityStateZip].filter(Boolean).join(', ');
+}
+
+function drawPartyEntry(doc, y, p) {
+  y = drawRow(doc, y, 'Name:', p.name);
+  y = drawRow(doc, y, 'Address:', partyAddressLine(p));
+  if (p.phone && String(p.phone).trim()) {
+    y = drawRow(doc, y, 'Phone:', p.phone);
+  }
+  if (p.license && String(p.license).trim()) {
+    y = drawRow(doc, y, 'DL/ID:', p.license);
+  }
+  return y;
+}
+
 function drawParty(doc, y, heading, party) {
   y = drawSectionHeading(doc, y, heading);
   // skipFill renders blank lines for handwriting. Two pairs of Name/Address
@@ -179,23 +200,22 @@ function drawParty(doc, y, heading, party) {
     y = drawRow(doc, y, 'Address:', '', { blank: true });
     return y + SECTION_GAP;
   }
-  y = drawRow(doc, y, 'Name:', party.name);
-  const addr = [party.street, party.city, party.state, party.zip]
-    .map(s => (s == null ? '' : String(s).trim()))
-    .filter(Boolean);
-  // Format as "123 Main St, Richmond, VA 23220"
-  const cityStateZip = [
-    party.city?.trim() || '',
-    [party.state?.trim() || '', party.zip?.trim() || ''].filter(Boolean).join(' '),
-  ].filter(Boolean).join(', ');
-  const addressLine = [party.street?.trim() || '', cityStateZip]
-    .filter(Boolean).join(', ');
-  y = drawRow(doc, y, 'Address:', addressLine || addr.join(', '));
-  if (party.phone && String(party.phone).trim()) {
-    y = drawRow(doc, y, 'Phone:', party.phone);
-  }
-  if (party.license && String(party.license).trim()) {
-    y = drawRow(doc, y, 'DL/ID:', party.license);
+  y = drawPartyEntry(doc, y, party);
+  if (party && party.hasCoOwner && party.coOwner) {
+    y += 6;
+    // When the user marks "shares this address," copy primary's street/
+    // city/state/zip onto the co-owner so the PDF reads cleanly without
+    // making the user retype.
+    const co = party.coOwnerSameAddress
+      ? {
+          ...party.coOwner,
+          street: party.street,
+          city: party.city,
+          state: party.state,
+          zip: party.zip,
+        }
+      : party.coOwner;
+    y = drawPartyEntry(doc, y, co);
   }
   return y + SECTION_GAP;
 }

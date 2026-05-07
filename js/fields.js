@@ -52,16 +52,25 @@ function partyFields(prefix, opts = {}) {
   const stepCopy = COPY[prefix] || {};
   // Skip-fill toggle leaves the section blank in the PDF for handwriting.
   // Used when the form printer doesn't have the counter-party's details yet.
+  // The "you" step (omitSkipFill: true) drops it - you presumably know your
+  // own info.
   const notSkipped = (s) => !s[prefix].skipFill;
-  const skipField = {
-    path: `${prefix}.skipFill`,
-    label: stepCopy.skipFill?.label || '',
-    req: false,
-    kind: 'checkbox',
-  };
-  if (opts.prominent) skipField.emphasis = 'prominent';
-  return [
-    skipField,
+  const showsCoOwner = (s) => !s[prefix].skipFill && !!s[prefix].hasCoOwner;
+  const showsCoOwnerAddress = (s) => showsCoOwner(s) && !s[prefix].coOwnerSameAddress;
+
+  const fields = [];
+  if (!opts.omitSkipFill) {
+    const skipField = {
+      path: `${prefix}.skipFill`,
+      label: stepCopy.skipFill?.label || '',
+      req: false,
+      kind: 'checkbox',
+    };
+    if (opts.prominent) skipField.emphasis = 'prominent';
+    fields.push(skipField);
+  }
+
+  fields.push(
     { path: `${prefix}.name`,    label: p.name.label,    req: !!p.name.req,    kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.street`,  label: p.street.label,  req: !!p.street.req,  kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.city`,    label: p.city.label,    req: !!p.city.req,    kind: 'text', showWhen: notSkipped },
@@ -69,7 +78,33 @@ function partyFields(prefix, opts = {}) {
     { path: `${prefix}.zip`,     label: p.zip.label,     req: !!p.zip.req,     kind: 'text', validate: ['zip'], showWhen: notSkipped },
     { path: `${prefix}.phone`,   label: p.phone.label,   req: !!p.phone.req,   kind: 'text', validate: ['phoneOptional'], showWhen: notSkipped },
     { path: `${prefix}.license`, label: p.license.label, req: !!p.license.req, kind: 'text', hint: p.license.hint, showWhen: notSkipped },
-  ];
+  );
+
+  // Joint-title toggle (button-styled). Only meaningful when not skip-filled
+  // (skip-fill already prints two blank pairs in the PDF).
+  fields.push({
+    path: `${prefix}.hasCoOwner`,
+    label: p.coOwnerToggle.label,
+    req: false,
+    kind: 'checkbox',
+    emphasis: 'prominent',
+    showWhen: notSkipped,
+  });
+
+  // Co-owner fields. Optional - none are required. Address fields hide when
+  // coOwnerSameAddress is on (the PDF will mirror the primary's address).
+  fields.push(
+    { path: `${prefix}.coOwner.name`,    label: p.coOwnerName.label,    req: false, kind: 'text', showWhen: showsCoOwner },
+    { path: `${prefix}.coOwnerSameAddress`, label: p.coOwnerSameAddress.label, req: false, kind: 'checkbox', showWhen: showsCoOwner },
+    { path: `${prefix}.coOwner.street`,  label: p.coOwnerStreet.label,  req: false, kind: 'text', showWhen: showsCoOwnerAddress },
+    { path: `${prefix}.coOwner.city`,    label: p.coOwnerCity.label,    req: false, kind: 'text', showWhen: showsCoOwnerAddress },
+    { path: `${prefix}.coOwner.state`,   label: p.coOwnerState.label,   req: false, kind: 'text', showWhen: showsCoOwnerAddress },
+    { path: `${prefix}.coOwner.zip`,     label: p.coOwnerZip.label,     req: false, kind: 'text', validate: ['zip'], showWhen: showsCoOwnerAddress },
+    { path: `${prefix}.coOwner.phone`,   label: p.coOwnerPhone.label,   req: false, kind: 'text', validate: ['phoneOptional'], showWhen: showsCoOwner },
+    { path: `${prefix}.coOwner.license`, label: p.coOwnerLicense.label, req: false, kind: 'text', showWhen: showsCoOwner },
+  );
+
+  return fields;
 }
 
 function vehicleFields(state) {
@@ -199,9 +234,9 @@ function saleFields(state) {
 export function fieldsForStep(stepNumber, state) {
   let raw;
   switch (stepNumber) {
-    case 1: raw = metaFields();                                      break;
-    case 2: raw = partyFields(youPrefix(state));                     break;
-    case 3: raw = partyFields(otherPrefix(state), { prominent: true }); break;
+    case 1: raw = metaFields();                                                       break;
+    case 2: raw = partyFields(youPrefix(state),    { omitSkipFill: true });           break;
+    case 3: raw = partyFields(otherPrefix(state),  { prominent: true });              break;
     case 4: raw = vehicleFields(state);                              break;
     case 5: raw = saleFields(state);                                 break;
     default: raw = [];
