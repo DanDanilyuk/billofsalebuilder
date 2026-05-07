@@ -15,6 +15,7 @@ import { defaultState, loadState, saveState, clearState } from './storage.js';
 import { fieldsForStep } from './fields.js';
 import { validators } from './validation.js';
 import { buildBillOfSalePdf } from './pdf.js';
+import { decodeVin } from './vin-decoder.js';
 
 const TOTAL_STEPS = 5;
 // Path changes that may add/remove conditional fields - require a re-render.
@@ -23,10 +24,15 @@ const RERENDER_PATHS = new Set([
   'vehicle.subType',
   'sale.payment',
 ]);
+const VIN_FORMAT = /^[A-HJ-NPR-Z0-9]{17}$/;
+const VIN_DEBOUNCE_MS = 250;
+const VIN_DECODED_REVERT_MS = 3000;
 
 let state = loadState(defaultState());
 let currentStep = 1;
 let lastBlobUrl = null;
+let vinDecodeToken = 0;     // increments per request; stale responses dropped
+let vinDecodeTimer = null;  // debounce timer
 
 // ---- init ----------------------------------------------------------------
 
@@ -187,6 +193,8 @@ function onFieldChange(e) {
   saveState(state);
   clearFieldError(e.target);
 
+  if (path === 'vehicle.vin') triggerVinDecode();
+
   if (RERENDER_PATHS.has(path)) {
     renderForm(currentStep);
     return;
@@ -206,6 +214,95 @@ function onFieldChange(e) {
     const lbl = e.target.closest('.checkbox');
     if (lbl) lbl.classList.toggle('is-selected', e.target.checked);
   }
+}
+
+// ---- VIN decoding --------------------------------------------------------
+
+function triggerVinDecode() {
+  clearTimeout(vinDecodeTimer);
+  const vin = String(state.vehicle.vin || '').toUpperCase();
+  const type = state.vehicle.type;
+  if (type !== 'motor' && type !== 'trailer') return;
+  if (!VIN_FORMAT.test(vin)) return;
+  vinDecodeTimer = setTimeout(() => runVinDecode(vin, type), VIN_DEBOUNCE_MS);
+}
+
+async function runVinDecode(vin, type) {
+  const myToken = ++vinDecodeToken;
+  setVinHint(COPY.step1?.vin?.status?.decoding || '');
+
+  let decoded = null;
+  try {
+    decoded = await decodeVin(vin, type);
+  } catch {
+    decoded = null;
+  }
+
+  // Drop stale responses if the user kept typing.
+  if (myToken !== vinDecodeToken) return;
+  if (String(state.vehicle.vin || '').toUpperCase() !== vin) return;
+
+  if (!decoded) {
+    // Clear the fields the decode would have controlled so the "fill manually"
+    // hint isn't a lie. Don't touch vehicle.type - we don't know what to set
+    // it to. Don't touch vin itself.
+    for (const k of ['year', 'make', 'model', 'subType', 'subTypeOther']) {
+      state.vehicle[k] = '';
+    }
+    saveState(state);
+    renderForm(currentStep);
+    setVinHint(COPY.step1?.vin?.status?.failed || '');
+    refocusVin();
+    return;
+  }
+
+  // Always overwrite decode-controlled fields. NHTSA's VehicleType (if
+  // present) flips the form's type; year/make/model/body fall through to
+  // empty when NHTSA didn't supply them so stale data from a previous VIN
+  // doesn't stick.
+  if (decoded.type != null) state.vehicle.type = decoded.type;
+  for (const k of ['year', 'make', 'model', 'subType', 'subTypeOther']) {
+    state.vehicle[k] = decoded[k] != null ? decoded[k] : '';
+  }
+  saveState(state);
+
+  // Re-render so the (possibly new) vehicle.type's field set + conditional
+  // fields (e.g. subTypeOther) appear/hide correctly. Restore focus to VIN.
+  renderForm(currentStep);
+  setVinHint(COPY.step1?.vin?.status?.decoded || '');
+
+  refocusVin();
+
+  setTimeout(() => {
+    if (String(state.vehicle.vin || '').toUpperCase() !== vin) return;
+    setVinHint(COPY.step1?.vin?.hint || '');
+  }, VIN_DECODED_REVERT_MS);
+}
+
+function refocusVin() {
+  const vinInput = document.querySelector('[data-path="vehicle.vin"]');
+  if (!vinInput) return;
+  vinInput.focus({ preventScroll: true });
+  if (typeof vinInput.setSelectionRange === 'function') {
+    const len = vinInput.value.length;
+    vinInput.setSelectionRange(len, len);
+  }
+}
+
+function setVinHint(text) {
+  const vinInput = document.querySelector('[data-path="vehicle.vin"]');
+  if (!vinInput) return;
+  const wrap = vinInput.closest('.field');
+  if (!wrap) return;
+  let hint = wrap.querySelector('.field__hint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.className = 'field__hint';
+    const err = wrap.querySelector('.field__error');
+    if (err) wrap.insertBefore(hint, err);
+    else wrap.appendChild(hint);
+  }
+  hint.textContent = text;
 }
 
 function validateStep(n) {

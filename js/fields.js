@@ -36,12 +36,10 @@ function vehicleFields(state) {
   const fields = [];
 
   fields.push({ path: 'vehicle.type', label: c.type.label, req: true, kind: 'radio', options: c.type.options });
-  fields.push({ path: 'vehicle.year', label: c.year.label, req: true, kind: 'number', validate: ['year'] });
-  fields.push({ path: 'vehicle.make', label: c.make.label, req: true, kind: 'text' });
-  fields.push({ path: 'vehicle.model', label: c.model.label, req: true, kind: 'text' });
-  fields.push({ path: 'vehicle.color', label: c.color.label, req: true, kind: 'text' });
 
-  // Identifier - shape depends on vehicle type.
+  // Identifier (VIN / serial / HIN) sits right after type. For motor + trailer
+  // the VIN auto-decodes via NHTSA vPIC and fills year/make/model/body; the
+  // user can edit the auto-filled values freely.
   if (t === 'motor') {
     fields.push({
       path: 'vehicle.vin', label: c.vin.label, hint: c.vin.hint,
@@ -60,6 +58,11 @@ function vehicleFields(state) {
       req: true, kind: 'text', mono: true, validate: ['hin'],
     });
   }
+
+  fields.push({ path: 'vehicle.year', label: c.year.label, req: true, kind: 'number', validate: ['year'] });
+  fields.push({ path: 'vehicle.make', label: c.make.label, req: true, kind: 'text' });
+  fields.push({ path: 'vehicle.model', label: c.model.label, req: true, kind: 'text' });
+  fields.push({ path: 'vehicle.color', label: c.color.label, req: true, kind: 'text' });
 
   // Length - trailer + boat.
   if (t === 'trailer' || t === 'boat') {

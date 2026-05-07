@@ -39,6 +39,11 @@ export const COPY = {
       label: "VIN",
       req: true,
       hint: "17 characters. We exclude letters I, O, and Q.",
+      status: {
+        decoding: "Decoding VIN...",
+        decoded: "Decoded - year, make, model, and body filled in.",
+        failed: "Couldn't decode this VIN. Fill in the details manually.",
+      },
     },
     serial: { label: "VIN or serial number", req: true },
     hin: {
