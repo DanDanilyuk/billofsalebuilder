@@ -124,10 +124,12 @@ export const COPY = {
   step2: {
     title: "Seller",
     sub: "Who is selling the vehicle.",
+    skipFill: { label: "Skip - leave seller blank for handwriting", req: false },
   },
   step3: {
     title: "Buyer",
     sub: "Who is purchasing the vehicle.",
+    skipFill: { label: "Skip - leave buyer blank for handwriting", req: false },
   },
   step4: {
     title: "Sale terms",
@@ -155,6 +157,7 @@ export const COPY = {
       label: "I understand the vehicle is sold as-is, with no warranties expressed or implied.",
       req: true,
     },
+    priceNegotiable: { label: "Negotiable - leave sale price blank", req: false },
   },
   step5: {
     title: "Review & download",

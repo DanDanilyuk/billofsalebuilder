@@ -109,11 +109,26 @@ function drawSectionHeading(doc, y, label) {
 }
 
 // Draws "Label:  value" where the value may wrap. Returns the new y.
+//   opts.mono: true   - render the value in Courier (used for VIN/HIN)
+//   opts.blank: true  - draw a horizontal underline at the value column
+//                       instead of text (used when a section is left blank
+//                       for handwriting)
 function drawRow(doc, y, label, value, opts = {}) {
   const text = value == null ? '' : String(value);
   doc.setFont('helvetica', 'normal').setFontSize(10);
   setColor(doc, MUTED);
   doc.text(label, BODY_INDENT, y);
+
+  const valueX = BODY_INDENT + LABEL_W;
+
+  if (opts.blank) {
+    setStroke(doc, INK);
+    doc.setLineWidth(0.5);
+    // Sit the line slightly below the label baseline so it reads as a
+    // writing line, not a strikethrough.
+    doc.line(valueX, y + 2, valueX + VALUE_W, y + 2);
+    return y + BODY_LINE_H;
+  }
 
   if (opts.mono) {
     doc.setFont('courier', 'normal').setFontSize(10);
@@ -122,7 +137,6 @@ function drawRow(doc, y, label, value, opts = {}) {
   }
   setColor(doc, INK);
 
-  const valueX = BODY_INDENT + LABEL_W;
   const lines = text === '' ? [''] : doc.splitTextToSize(text, VALUE_W);
   lines.forEach((line, i) => {
     doc.text(line, valueX, y + i * BODY_LINE_H);
@@ -134,6 +148,13 @@ function drawRow(doc, y, label, value, opts = {}) {
 
 function drawParty(doc, y, heading, party) {
   y = drawSectionHeading(doc, y, heading);
+  // skipFill renders blank lines for handwriting and omits Phone / DL-ID
+  // (those rows are optional anyway).
+  if (party && party.skipFill) {
+    y = drawRow(doc, y, 'Name:', '', { blank: true });
+    y = drawRow(doc, y, 'Address:', '', { blank: true });
+    return y + SECTION_GAP;
+  }
   y = drawRow(doc, y, 'Name:', party.name);
   const addr = [party.street, party.city, party.state, party.zip]
     .map(s => (s == null ? '' : String(s).trim()))
@@ -193,7 +214,9 @@ function drawVehicle(doc, y, vehicle) {
 
 function drawSale(doc, y, sale) {
   y = drawSectionHeading(doc, y, COPY.pdf.saleHeading);
-  if (sale.payment === 'gift') {
+  if (sale.priceNegotiable && sale.payment !== 'gift') {
+    y = drawRow(doc, y, 'Sale price:', '', { blank: true });
+  } else if (sale.payment === 'gift') {
     y = drawRow(doc, y, 'Sale price:', 'Gift - no monetary consideration');
   } else {
     y = drawRow(doc, y, 'Sale price:', formatPrice(sale));

@@ -31,9 +31,11 @@ export function defaultState() {
     },
     seller: {
       name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      skipFill: false,
     },
     buyer: {
       name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      skipFill: false,
     },
     sale: {
       price: '',
@@ -41,6 +43,7 @@ export function defaultState() {
       payment: 'cash',
       paymentOther: '',
       asIsAck: false,
+      priceNegotiable: false,
     },
     meta: {
       version: 1,

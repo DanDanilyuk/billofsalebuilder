@@ -23,6 +23,9 @@ const RERENDER_PATHS = new Set([
   'vehicle.type',
   'vehicle.subType',
   'sale.payment',
+  'sale.priceNegotiable',
+  'seller.skipFill',
+  'buyer.skipFill',
 ]);
 const VIN_FORMAT = /^[A-HJ-NPR-Z0-9]{17}$/;
 const VIN_DEBOUNCE_MS = 250;

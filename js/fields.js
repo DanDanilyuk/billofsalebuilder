@@ -19,14 +19,19 @@ import { COPY } from './copy.js';
 
 function partyFields(prefix) {
   const p = COPY.parties;
+  const stepCopy = prefix === 'seller' ? COPY.step2 : COPY.step3;
+  // Skip-fill toggle leaves the section blank in the PDF for handwriting.
+  // Used when the form printer doesn't have the counter-party's details yet.
+  const notSkipped = (s) => !s[prefix].skipFill;
   return [
-    { path: `${prefix}.name`,    label: p.name.label,    req: !!p.name.req,    kind: 'text' },
-    { path: `${prefix}.street`,  label: p.street.label,  req: !!p.street.req,  kind: 'text' },
-    { path: `${prefix}.city`,    label: p.city.label,    req: !!p.city.req,    kind: 'text' },
-    { path: `${prefix}.state`,   label: p.state.label,   req: !!p.state.req,   kind: 'text' },
-    { path: `${prefix}.zip`,     label: p.zip.label,     req: !!p.zip.req,     kind: 'text', validate: ['zip'] },
-    { path: `${prefix}.phone`,   label: p.phone.label,   req: !!p.phone.req,   kind: 'text', validate: ['phoneOptional'] },
-    { path: `${prefix}.license`, label: p.license.label, req: !!p.license.req, kind: 'text', hint: p.license.hint },
+    { path: `${prefix}.skipFill`, label: stepCopy.skipFill.label, req: false, kind: 'checkbox' },
+    { path: `${prefix}.name`,    label: p.name.label,    req: !!p.name.req,    kind: 'text', showWhen: notSkipped },
+    { path: `${prefix}.street`,  label: p.street.label,  req: !!p.street.req,  kind: 'text', showWhen: notSkipped },
+    { path: `${prefix}.city`,    label: p.city.label,    req: !!p.city.req,    kind: 'text', showWhen: notSkipped },
+    { path: `${prefix}.state`,   label: p.state.label,   req: !!p.state.req,   kind: 'text', showWhen: notSkipped },
+    { path: `${prefix}.zip`,     label: p.zip.label,     req: !!p.zip.req,     kind: 'text', validate: ['zip'], showWhen: notSkipped },
+    { path: `${prefix}.phone`,   label: p.phone.label,   req: !!p.phone.req,   kind: 'text', validate: ['phoneOptional'], showWhen: notSkipped },
+    { path: `${prefix}.license`, label: p.license.label, req: !!p.license.req, kind: 'text', hint: p.license.hint, showWhen: notSkipped },
   ];
 }
 
@@ -113,10 +118,17 @@ function vehicleFields(state) {
 function saleFields() {
   const c = COPY.step4;
   return [
+    // Negotiable toggle hides the price field and renders a blank line in the
+    // PDF. Only meaningful when payment isn't a gift (gifts already skip price).
+    {
+      path: 'sale.priceNegotiable', label: c.priceNegotiable.label,
+      req: false, kind: 'checkbox',
+      showWhen: (s) => s.sale.payment !== 'gift',
+    },
     {
       path: 'sale.price', label: c.price.label, hint: c.price.hint,
       req: true, kind: 'number', validate: ['price'],
-      showWhen: (s) => s.sale.payment !== 'gift',
+      showWhen: (s) => s.sale.payment !== 'gift' && !s.sale.priceNegotiable,
     },
     { path: 'sale.date', label: c.date.label, req: true, kind: 'date', validate: ['date'] },
     { path: 'sale.payment', label: c.payment.label, req: true, kind: 'radio', options: c.payment.options },
