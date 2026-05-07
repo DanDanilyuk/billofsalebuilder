@@ -647,6 +647,57 @@ function validateStep(n) {
 
 // ---- actions -------------------------------------------------------------
 
+// ---- modal ---------------------------------------------------------------
+//
+// In-page confirm dialog. Replaces the native window.confirm so the visual
+// language matches the rest of the wizard. Returns a Promise<boolean>:
+// resolves true when the user clicks the confirm button, false on cancel
+// (Esc, click outside, click the cancel button).
+
+function showModal(key) {
+  return new Promise((resolve) => {
+    const modalCopy = COPY.modals?.[key];
+    const modal = document.querySelector('[data-modal]');
+    if (!modal || !modalCopy) { resolve(false); return; }
+
+    const setText = (sel, text) => {
+      const el = modal.querySelector(sel);
+      if (el) el.textContent = text;
+    };
+    setText('[data-modal-title]', modalCopy.title);
+    setText('[data-modal-body]', modalCopy.body);
+    setText('[data-modal-cancel]', modalCopy.cancel);
+    setText('[data-modal-confirm]', modalCopy.confirm);
+
+    const previouslyFocused = document.activeElement;
+    const cleanup = (result) => {
+      modal.hidden = true;
+      modal.removeEventListener('click', onClick);
+      document.removeEventListener('keydown', onKey);
+      if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+        previouslyFocused.focus();
+      }
+      resolve(result);
+    };
+    const onClick = (e) => {
+      if (e.target.closest('[data-modal-confirm]')) cleanup(true);
+      else if (e.target.closest('[data-modal-cancel]')) cleanup(false);
+      else if (e.target.closest('[data-modal-overlay]')) cleanup(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') cleanup(false);
+    };
+
+    modal.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKey);
+    modal.hidden = false;
+    // Focus cancel by default - safer dismiss for an undo-less destructive action.
+    setTimeout(() => modal.querySelector('[data-modal-cancel]')?.focus(), 0);
+  });
+}
+
+// ---- actions -------------------------------------------------------------
+
 function bindActions() {
   document.querySelector('[data-action="back"]').addEventListener('click', () => {
     goto(currentStep - 1);
@@ -654,8 +705,9 @@ function bindActions() {
   document.querySelector('[data-action="continue"]').addEventListener('click', () => {
     if (validateStep(currentStep)) goto(currentStep + 1);
   });
-  document.querySelector('[data-action="clear"]').addEventListener('click', () => {
-    if (confirm('Clear the form? This cannot be undone.')) {
+  document.querySelector('[data-action="clear"]').addEventListener('click', async () => {
+    const confirmed = await showModal('clearForm');
+    if (confirmed) {
       clearState();
       state = defaultState();
       currentStep = 1;

@@ -74,6 +74,18 @@
 
   <footer class="page-footer" data-page-disclaimer></footer>
 
+  <div class="modal" data-modal hidden>
+    <div class="modal__overlay" data-modal-overlay></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-clear-title">
+      <h2 class="modal__title" id="modal-clear-title" data-modal-title></h2>
+      <p class="modal__body" data-modal-body></p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" data-modal-cancel></button>
+        <button type="button" class="btn btn--primary" data-modal-confirm></button>
+      </div>
+    </div>
+  </div>
+
   <script src="lib/jspdf.umd.min.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>

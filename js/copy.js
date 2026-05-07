@@ -27,6 +27,14 @@ export const COPY = {
     download: "Download PDF",
     backToEdit: "Back to edit",
   },
+  modals: {
+    clearForm: {
+      title: "Clear the form?",
+      body: "This erases everything you've entered. You can't undo it.",
+      cancel: "Cancel",
+      confirm: "Clear form",
+    },
+  },
   // Per-step chrome (eyebrow / title / sub). app.js writes these onto the
   // empty [data-step-*] attributes when a step renders. titleTemplate steps
   // (you / other) substitute {role} with the party label at render time.
