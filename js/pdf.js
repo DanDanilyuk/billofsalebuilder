@@ -25,7 +25,7 @@ const MUTED = [115, 115, 115];
 const RULE = [229, 229, 229];
 
 // Vertical rhythm.
-const HEADING_GAP = 14;       // gap from heading baseline to first body line
+const HEADING_GAP = 20;       // gap from heading baseline to first body line
 const BODY_LINE_H = 14;       // 10pt body @ ~1.4 line height
 const ACK_LINE_H = 14;        // 10pt ack @ ~1.4 line height
 const SECTION_GAP = 18;       // gap between sections
