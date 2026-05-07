@@ -8,7 +8,7 @@
 
 export const COPY = {
   app: {
-    title: "Vehicle Bill of Sale",
+    title: "Bill of Sale Builder",
     // Subtitle is rendered dynamically by app.js using the selected state's
     // honorific and name (e.g. "State of California", "Commonwealth of
     // Pennsylvania", "District of Columbia").
