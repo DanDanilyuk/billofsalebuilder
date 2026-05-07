@@ -71,7 +71,7 @@ function partyFields(prefix, opts = {}) {
   }
 
   fields.push(
-    { path: `${prefix}.firstName`,  label: p.firstName.label,  req: !!p.firstName.req,  kind: 'text', hint: stepCopy.nameHint, showWhen: notSkipped },
+    { path: `${prefix}.firstName`,  label: p.firstName.label,  req: !!p.firstName.req,  kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.middleName`, label: p.middleName.label, req: !!p.middleName.req, kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.lastName`,   label: p.lastName.label,   req: !!p.lastName.req,   kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.street`,  label: p.street.label,  req: !!p.street.req,  kind: 'text', showWhen: notSkipped },
@@ -96,7 +96,7 @@ function partyFields(prefix, opts = {}) {
   // Co-owner fields. Optional - none are required. Address fields hide when
   // coOwnerSameAddress is on (the PDF will mirror the primary's address).
   fields.push(
-    { path: `${prefix}.coOwner.firstName`,  label: p.coOwnerFirstName.label,  req: false, kind: 'text', hint: stepCopy.nameHint, showWhen: showsCoOwner },
+    { path: `${prefix}.coOwner.firstName`,  label: p.coOwnerFirstName.label,  req: false, kind: 'text', showWhen: showsCoOwner },
     { path: `${prefix}.coOwner.middleName`, label: p.coOwnerMiddleName.label, req: false, kind: 'text', showWhen: showsCoOwner },
     { path: `${prefix}.coOwner.lastName`,   label: p.coOwnerLastName.label,   req: false, kind: 'text', showWhen: showsCoOwner },
     { path: `${prefix}.coOwnerSameAddress`, label: p.coOwnerSameAddress.label, req: false, kind: 'checkbox', showWhen: showsCoOwner },

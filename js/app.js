@@ -100,15 +100,20 @@ function applyDynamicChrome(n) {
   if (!stepCopy) return;
 
   let title = stepCopy.title || '';
+  let sub = stepCopy.sub || '';
   if (stepCopy.titleTemplate) {
     const partyKey = (stepKey === 'you') ? youPrefix(state) : otherPrefix(state);
     const partyLabel = COPY.meta.role.options[partyKey] || '';
     title = stepCopy.titleTemplate.replace('{role}', partyLabel);
+    // Surface the role-specific name hint at section level so it covers all
+    // three name fields (and the co-owner) instead of just First name.
+    const nameHint = COPY[partyKey]?.nameHint;
+    if (nameHint) sub = sub ? `${sub} ${nameHint}` : nameHint;
   }
 
   setText(sec, '[data-step-eyebrow]', stepCopy.eyebrow || '');
   setText(sec, '[data-step-title]', title);
-  setText(sec, '[data-step-sub]', stepCopy.sub || '');
+  setText(sec, '[data-step-sub]', sub);
 }
 
 function applyStateChrome() {
