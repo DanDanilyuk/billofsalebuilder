@@ -75,9 +75,9 @@ function partyFields(prefix, opts = {}) {
     { path: `${prefix}.middleName`, label: p.middleName.label, req: !!p.middleName.req, kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.lastName`,   label: p.lastName.label,   req: !!p.lastName.req,   kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.street`,  label: p.street.label,  req: !!p.street.req,  kind: 'text', showWhen: notSkipped },
+    { path: `${prefix}.zip`,     label: p.zip.label,     req: !!p.zip.req,     kind: 'text', validate: ['zip'], showWhen: notSkipped },
     { path: `${prefix}.city`,    label: p.city.label,    req: !!p.city.req,    kind: 'text', showWhen: notSkipped },
     { path: `${prefix}.state`,   label: p.state.label,   req: !!p.state.req,   kind: 'text', showWhen: notSkipped },
-    { path: `${prefix}.zip`,     label: p.zip.label,     req: !!p.zip.req,     kind: 'text', validate: ['zip'], showWhen: notSkipped },
     { path: `${prefix}.phone`,   label: p.phone.label,   req: !!p.phone.req,   kind: 'text', validate: ['phoneOptional'], showWhen: notSkipped },
     { path: `${prefix}.license`, label: p.license.label, req: !!p.license.req, kind: 'text', hint: p.license.hint, showWhen: notSkipped },
   );
@@ -101,9 +101,9 @@ function partyFields(prefix, opts = {}) {
     { path: `${prefix}.coOwner.lastName`,   label: p.coOwnerLastName.label,   req: false, kind: 'text', showWhen: showsCoOwner },
     { path: `${prefix}.coOwnerSameAddress`, label: p.coOwnerSameAddress.label, req: false, kind: 'checkbox', showWhen: showsCoOwner },
     { path: `${prefix}.coOwner.street`,  label: p.coOwnerStreet.label,  req: false, kind: 'text', showWhen: showsCoOwnerAddress },
+    { path: `${prefix}.coOwner.zip`,     label: p.coOwnerZip.label,     req: false, kind: 'text', validate: ['zip'], showWhen: showsCoOwnerAddress },
     { path: `${prefix}.coOwner.city`,    label: p.coOwnerCity.label,    req: false, kind: 'text', showWhen: showsCoOwnerAddress },
     { path: `${prefix}.coOwner.state`,   label: p.coOwnerState.label,   req: false, kind: 'text', showWhen: showsCoOwnerAddress },
-    { path: `${prefix}.coOwner.zip`,     label: p.coOwnerZip.label,     req: false, kind: 'text', validate: ['zip'], showWhen: showsCoOwnerAddress },
     { path: `${prefix}.coOwner.phone`,   label: p.coOwnerPhone.label,   req: false, kind: 'text', validate: ['phoneOptional'], showWhen: showsCoOwner },
     { path: `${prefix}.coOwner.license`, label: p.coOwnerLicense.label, req: false, kind: 'text', showWhen: showsCoOwner },
   );

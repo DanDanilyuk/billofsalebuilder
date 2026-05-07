@@ -24,6 +24,7 @@ import { fieldsForStep, youPrefix, otherPrefix } from './fields.js';
 import { validators } from './validation.js';
 import { buildBillOfSalePdf } from './pdf.js';
 import { decodeVin } from './vin-decoder.js';
+import { decodeZip } from './zip-decoder.js';
 import { STATES, STATE_LIST, getState } from './states.js';
 
 const TOTAL_STEPS = 6;
@@ -156,11 +157,14 @@ function renderForm(n) {
 
   // Bind 'input' for typed fields (fires per-keystroke, keeps state fresh)
   // and 'change' for radio/checkbox/select (fires once on selection).
+  // Text inputs ALSO listen for 'change' so blur-triggered effects (e.g.
+  // ZIP -> city/state lookup) can run after the user is done typing.
   // Hidden inputs (used by searchSelect anchors) listen on 'input' too.
   form.querySelectorAll(
     'input[type="text"], input[type="number"], input[type="date"], input[type="hidden"]'
   ).forEach((el) => {
     el.addEventListener('input', onFieldChange);
+    if (el.type !== 'hidden') el.addEventListener('change', onFieldChange);
   });
   form.querySelectorAll('input[type="radio"], input[type="checkbox"], select').forEach((el) => {
     el.addEventListener('change', onFieldChange);
@@ -510,6 +514,11 @@ function onFieldChange(e) {
 
   if (path === 'vehicle.vin') triggerVinDecode();
 
+  // ZIP -> city/state lookup. Fires only on blur (e.type==='change'), so it
+  // doesn't hammer the API while the user is still typing. Fills city/state
+  // ONLY when blank, so user-edited values are preserved.
+  if (e.type === 'change' && /\.zip$/.test(path)) triggerZipLookup(path);
+
   if (RERENDER_PATHS.has(path)) {
     applyDynamicChrome(currentStep);
     applyStateChrome();
@@ -543,6 +552,40 @@ function applyNotaryAutoDefault() {
   if (!stateData) return;
   state.sale.includeNotary = stateData.notary === 'required'
     || stateData.notary === 'recommended';
+}
+
+// ---- ZIP -> city/state lookup -------------------------------------------
+
+async function triggerZipLookup(path) {
+  // path is one of: '<prefix>.zip' or '<prefix>.coOwner.zip'.
+  // Derive the address root by trimming '.zip'.
+  const root = path.slice(0, -'.zip'.length);
+  const zip = String(getByPath(state, path) || '').trim();
+
+  const decoded = await decodeZip(zip);
+  if (!decoded) return;
+
+  // Bail if the user kept editing - the field's value should still match the
+  // ZIP we looked up. (Same idea as the VIN stale-response guard.)
+  if (String(getByPath(state, path) || '').trim() !== zip) return;
+
+  let touched = false;
+  for (const [key, value] of [['city', decoded.city], ['state', decoded.state]]) {
+    const fieldPath = `${root}.${key}`;
+    const current = String(getByPath(state, fieldPath) || '').trim();
+    if (current) continue; // respect user-typed values
+    setByPath(state, fieldPath, value);
+    touched = true;
+
+    // Update the visible input in place (these paths aren't in
+    // RERENDER_PATHS, so we don't need a full re-render).
+    const input = document.querySelector(`[data-path="${fieldPath}"]`);
+    if (input) {
+      input.value = value;
+      clearFieldError(input);
+    }
+  }
+  if (touched) saveState(state);
 }
 
 // ---- VIN decoding --------------------------------------------------------
