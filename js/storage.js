@@ -31,7 +31,8 @@ export function defaultState() {
       odometerStatus: 'actual',
     },
     seller: {
-      name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      firstName: '', middleName: '', lastName: '',
+      street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
       skipFill: false,
       // Joint-title support: when hasCoOwner is true, the form shows a second
       // set of fields for the co-owner and the PDF prints them.
@@ -39,14 +40,21 @@ export function defaultState() {
       // row in the PDF and hides the redundant inputs.
       hasCoOwner: false,
       coOwnerSameAddress: false,
-      coOwner: { name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '' },
+      coOwner: {
+        firstName: '', middleName: '', lastName: '',
+        street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      },
     },
     buyer: {
-      name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      firstName: '', middleName: '', lastName: '',
+      street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
       skipFill: false,
       hasCoOwner: false,
       coOwnerSameAddress: false,
-      coOwner: { name: '', street: '', city: '', state: 'VA', zip: '', phone: '', license: '' },
+      coOwner: {
+        firstName: '', middleName: '', lastName: '',
+        street: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      },
     },
     sale: {
       price: '',

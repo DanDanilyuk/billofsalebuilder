@@ -257,7 +257,9 @@ function renderField(field) {
       else if (/\.city$/.test(field.path)) input.autocomplete = 'address-level2';
       else if (/\.state$/.test(field.path)) input.autocomplete = 'address-level1';
       else if (/\.street$/.test(field.path)) input.autocomplete = 'street-address';
-      else if (/\.name$/.test(field.path)) input.autocomplete = 'name';
+      else if (/\.firstName$/.test(field.path)) input.autocomplete = 'given-name';
+      else if (/\.middleName$/.test(field.path)) input.autocomplete = 'additional-name';
+      else if (/\.lastName$/.test(field.path)) input.autocomplete = 'family-name';
       else if (/\.phone$/.test(field.path)) input.autocomplete = 'tel';
       wrap.appendChild(input);
     }
@@ -785,15 +787,7 @@ function renderPreview() {
 }
 
 function downloadFilename() {
-  // Strip common name suffixes (Jr., Sr., II-V, with optional trailing comma)
-  // before grabbing the last token. Otherwise "Bart Christopherson III" would
-  // produce ".../iii-..." instead of ".../christopherson-...".
-  const SUFFIX = /^(jr\.?|sr\.?|ii|iii|iv|v)$/i;
-  const raw = (state.seller?.name || '').trim();
-  const tokens = raw
-    .split(/\s+/)
-    .filter((t) => t && !SUFFIX.test(t.replace(/,$/, '')));
-  const last = (tokens.pop() || 'seller').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const last = (state.seller?.lastName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const date = state.sale?.date || new Date().toISOString().slice(0, 10);
   const prefix = String(state.meta?.usState || 'va').toLowerCase();
   return `${prefix}-bill-of-sale-${last || 'seller'}-${date}.pdf`;

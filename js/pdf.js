@@ -175,8 +175,16 @@ function partyAddressLine(p) {
   return [p.street?.trim() || '', cityStateZip].filter(Boolean).join(', ');
 }
 
+function partyFullName(p) {
+  if (!p) return '';
+  return [p.firstName, p.middleName, p.lastName]
+    .map((s) => (s == null ? '' : String(s).trim()))
+    .filter(Boolean)
+    .join(' ');
+}
+
 function drawPartyEntry(doc, y, p) {
-  y = drawRow(doc, y, 'Name:', p.name);
+  y = drawRow(doc, y, 'Name:', partyFullName(p));
   y = drawRow(doc, y, 'Address:', partyAddressLine(p));
   if (p.phone && String(p.phone).trim()) {
     y = drawRow(doc, y, 'Phone:', p.phone);
