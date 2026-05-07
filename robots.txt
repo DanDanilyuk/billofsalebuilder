@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://TBD.example/sitemap.xml
+Sitemap: https://www.billofsalebuilder.com/sitemap.xml
