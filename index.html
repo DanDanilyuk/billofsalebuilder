@@ -41,11 +41,36 @@
   </script>
 
   <link rel="stylesheet" href="css/styles.css">
+
+  <script>
+    // No-flash theme init: read user's explicit choice or fall back to OS.
+    // Runs before stylesheets paint; CSS keys off the data-theme attribute.
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        var theme = stored === 'light' || stored === 'dark'
+          ? stored
+          : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        // localStorage / matchMedia disabled - fall through to default light.
+      }
+    })();
+  </script>
 </head>
 <body>
   <header class="page-header">
     <div class="brand">Vehicle Bill of Sale</div>
     <div class="brand-sub" data-state-subtitle></div>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+    </button>
   </header>
 
   <main class="wizard">
@@ -108,7 +133,13 @@
     </div>
   </main>
 
-  <footer class="page-footer" data-page-disclaimer></footer>
+  <footer class="page-footer">
+    <p class="page-footer__disclaimer" data-page-disclaimer></p>
+    <p class="page-footer__credit">
+      Made by <a href="https://dandanilyuk.com" target="_blank" rel="noopener">Dan Danilyuk</a> -
+      <a href="https://github.com/DanDanilyuk/bill_of_sale" target="_blank" rel="noopener">GitHub</a>
+    </p>
+  </footer>
 
   <div class="modal" data-modal hidden>
     <div class="modal__overlay" data-modal-overlay></div>

@@ -73,7 +73,44 @@ let vinDecodeTimer = null;  // debounce timer
 function init() {
   bindActions();
   bindGlobalSearchSelectClose();
+  bindThemeToggle();
   renderStep(currentStep);
+}
+
+// ---- theme toggle --------------------------------------------------------
+
+function bindThemeToggle() {
+  const btn = document.querySelector('[data-theme-toggle]');
+  if (!btn) return;
+
+  const setLabel = () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    btn.setAttribute('aria-label', `Switch to ${next} theme`);
+  };
+  setLabel();
+
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch {}
+    setLabel();
+  });
+
+  // If the user hasn't picked manually, follow OS theme changes live.
+  if (window.matchMedia) {
+    const mq = matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e) => {
+      let stored = null;
+      try { stored = localStorage.getItem('theme'); } catch {}
+      if (stored === 'light' || stored === 'dark') return;
+      document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      setLabel();
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+  }
 }
 
 // ---- step rendering ------------------------------------------------------
