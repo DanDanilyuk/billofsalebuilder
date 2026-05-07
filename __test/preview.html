@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF preview harness</title>
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --ink: #0a0a0a;
+      --muted: #737373;
+      --subtle: #e5e5e5;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 4px;
+      letter-spacing: -0.01em;
+    }
+    .sub {
+      color: var(--muted);
+      margin-bottom: 24px;
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--subtle);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card__title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .card__name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: -8px;
+    }
+    iframe {
+      width: 100%;
+      height: 720px;
+      border: 1px solid var(--subtle);
+      border-radius: 6px;
+      background: #fff;
+    }
+    .actions { display: flex; gap: 8px; }
+    a.btn {
+      flex: 1;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--subtle);
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    a.btn:hover { border-color: var(--ink); }
+    .err {
+      color: #b91c1c;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>PDF preview harness</h1>
+  <p class="sub">
+    Renders <code>buildBillOfSalePdf(state)</code> against three hardcoded
+    sample states. Verify each iframe before signing off Task 3.
+  </p>
+
+  <div id="grid" class="grid"></div>
+
+  <!-- jsPDF must load before pdf.js (UMD attaches to window.jspdf). -->
+  <script src="../lib/jspdf.umd.min.js"></script>
+  <script type="module">
+    import { buildBillOfSalePdf } from '../js/pdf.js';
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    const samples = [
+      {
+        name: 'Motor vehicle - cash sale',
+        state: {
+          vehicle: {
+            type: 'motor',
+            year: '2018',
+            make: 'Toyota',
+            model: 'Camry',
+            color: 'Silver',
+            subType: 'sedan',
+            subTypeOther: '',
+            vin: '4T1B11HK5JU123456',
+            hin: '',
+            length: '',
+            hullMaterial: '',
+            odometer: '67432',
+            odometerUnit: 'miles',
+            odometerStatus: 'actual',
+          },
+          seller: {
+            name: 'Jane Q. Seller',
+            street: '123 Main Street',
+            city: 'Richmond',
+            state: 'VA',
+            zip: '23220',
+            phone: '8045551234',
+            license: 'A12345678',
+          },
+          buyer: {
+            name: 'John P. Buyer',
+            street: '456 Oak Avenue',
+            city: 'Charlottesville',
+            state: 'VA',
+            zip: '22902',
+            phone: '4345559876',
+            license: '',
+          },
+          sale: {
+            price: '12500.00',
+            date: today,
+            payment: 'cash',
+            paymentOther: '',
+            asIsAck: true,
+          },
+          meta: { version: 1, updatedAt: new Date().toISOString() },
+        },
+      },
+      {
+        name: 'Trailer - check, no odometer',
+        state: {
+          vehicle: {
+            type: 'trailer',
+            year: '2020',
+            make: 'Big Tex',
+            model: '70CH',
+            color: 'Black',
+            subType: 'utility',
+            subTypeOther: '',
+            vin: '16VCX1420L1234567',
+            hin: '',
+            length: '14',
+            hullMaterial: '',
+            odometer: '',
+            odometerUnit: 'miles',
+            odometerStatus: 'actual',
+          },
+          seller: {
+            name: 'Marcus L. Henderson-Wright',
+            street: '7821 Westmoreland Boulevard, Apt 4B',
+            city: 'Virginia Beach',
+            state: 'VA',
+            zip: '23456-7890',
+            phone: '',
+            license: '',
+          },
+          buyer: {
+            name: 'Priya Subramanian',
+            street: '15 Short Ln',
+            city: 'Norfolk',
+            state: 'VA',
+            zip: '23510',
+            phone: '7575551122',
+            license: 'T98765432',
+          },
+          sale: {
+            price: '3200.00',
+            date: today,
+            payment: 'check',
+            paymentOther: '',
+            asIsAck: true,
+          },
+          meta: { version: 1, updatedAt: new Date().toISOString() },
+        },
+      },
+      {
+        name: 'Boat - gift transfer',
+        state: {
+          vehicle: {
+            type: 'boat',
+            year: '2015',
+            make: 'Boston Whaler',
+            model: 'Montauk 170',
+            color: 'White / Blue',
+            subType: 'powerboat',
+            subTypeOther: '',
+            vin: '',
+            hin: 'BWCE1234E515',
+            length: '17',
+            hullMaterial: 'fiberglass',
+            odometer: '',
+            odometerUnit: 'miles',
+            odometerStatus: 'actual',
+          },
+          seller: {
+            name: 'Robert E. Lee Jr.',
+            street: '1 Harbor Way',
+            city: 'Hampton',
+            state: 'VA',
+            zip: '23669',
+            phone: '7575550001',
+            license: '',
+          },
+          buyer: {
+            name: 'Eleanor Lee',
+            street: '1 Harbor Way',
+            city: 'Hampton',
+            state: 'VA',
+            zip: '23669',
+            phone: '',
+            license: '',
+          },
+          sale: {
+            price: '0',
+            date: today,
+            payment: 'gift',
+            paymentOther: '',
+            asIsAck: true,
+          },
+          meta: { version: 1, updatedAt: new Date().toISOString() },
+        },
+      },
+    ];
+
+    const grid = document.getElementById('grid');
+
+    for (const sample of samples) {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const title = document.createElement('div');
+      title.className = 'card__title';
+      title.textContent = sample.state.vehicle.type;
+      card.appendChild(title);
+
+      const name = document.createElement('div');
+      name.className = 'card__name';
+      name.textContent = sample.name;
+      card.appendChild(name);
+
+      try {
+        const blob = buildBillOfSalePdf(sample.state);
+        const url = URL.createObjectURL(blob);
+
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.title = sample.name;
+        card.appendChild(iframe);
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const open = document.createElement('a');
+        open.className = 'btn';
+        open.href = url;
+        open.target = '_blank';
+        open.rel = 'noopener';
+        open.textContent = 'Open in new tab';
+        actions.appendChild(open);
+
+        const dl = document.createElement('a');
+        dl.className = 'btn';
+        dl.href = url;
+        dl.download = `sample-${sample.state.vehicle.type}.pdf`;
+        dl.textContent = 'Download';
+        actions.appendChild(dl);
+
+        card.appendChild(actions);
+      } catch (err) {
+        const e = document.createElement('div');
+        e.className = 'err';
+        e.textContent = (err && err.stack) || String(err);
+        card.appendChild(e);
+        console.error(sample.name, err);
+      }
+
+      grid.appendChild(card);
+    }
+  </script>
+</body>
+</html>

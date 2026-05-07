@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Virginia Vehicle Bill of Sale</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="page-header">
+    <div class="brand">Vehicle Bill of Sale</div>
+    <div class="brand-sub">Commonwealth of Virginia</div>
+  </header>
+
+  <main class="wizard">
+    <div class="progress" aria-label="Wizard progress">
+      <span class="progress__seg" data-step="1"></span>
+      <span class="progress__seg" data-step="2"></span>
+      <span class="progress__seg" data-step="3"></span>
+      <span class="progress__seg" data-step="4"></span>
+      <span class="progress__seg" data-step="5"></span>
+    </div>
+
+    <section class="step" data-step="1" hidden>
+      <div class="eyebrow">Step 1 of 5</div>
+      <h1 class="step__title">Vehicle</h1>
+      <p class="step__sub">What's being sold.</p>
+      <form class="step__form" data-step-form="1"><!-- fields injected by app.js --></form>
+    </section>
+
+    <section class="step" data-step="2" hidden>
+      <div class="eyebrow">Step 2 of 5</div>
+      <h1 class="step__title">Seller</h1>
+      <p class="step__sub">Who is selling the vehicle.</p>
+      <form class="step__form" data-step-form="2"></form>
+    </section>
+
+    <section class="step" data-step="3" hidden>
+      <div class="eyebrow">Step 3 of 5</div>
+      <h1 class="step__title">Buyer</h1>
+      <p class="step__sub">Who is purchasing the vehicle.</p>
+      <form class="step__form" data-step-form="3"></form>
+    </section>
+
+    <section class="step" data-step="4" hidden>
+      <div class="eyebrow">Step 4 of 5</div>
+      <h1 class="step__title">Sale terms</h1>
+      <p class="step__sub">Price, date, and payment.</p>
+      <form class="step__form" data-step-form="4"></form>
+    </section>
+
+    <section class="step" data-step="5" hidden>
+      <div class="eyebrow">Step 5 of 5</div>
+      <h1 class="step__title">Review &amp; download</h1>
+      <p class="step__sub">Verify the document below, then download.</p>
+      <iframe class="pdf-preview" title="Bill of Sale preview"></iframe>
+    </section>
+
+    <div class="actions">
+      <button type="button" class="btn btn--ghost" data-action="back">Back</button>
+      <button type="button" class="btn btn--secondary" data-action="clear" hidden>Clear form</button>
+      <button type="button" class="btn btn--primary" data-action="continue">Continue</button>
+      <a class="btn btn--primary" data-action="download" hidden>Download PDF</a>
+    </div>
+  </main>
+
+  <footer class="page-footer">
+    Not a substitute for Virginia DMV title transfer requirements.
+  </footer>
+
+  <script src="lib/jspdf.umd.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
