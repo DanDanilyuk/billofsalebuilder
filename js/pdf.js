@@ -168,9 +168,13 @@ function drawRow(doc, y, label, value, opts = {}) {
 
 function drawParty(doc, y, heading, party) {
   y = drawSectionHeading(doc, y, heading);
-  // skipFill renders blank lines for handwriting and omits Phone / DL-ID
-  // (those rows are optional anyway).
+  // skipFill renders blank lines for handwriting. Two pairs of Name/Address
+  // rows so co-owners (joint title) both have a slot. Phone / DL-ID are
+  // omitted in this mode (those rows are optional anyway).
   if (party && party.skipFill) {
+    y = drawRow(doc, y, 'Name:', '', { blank: true });
+    y = drawRow(doc, y, 'Address:', '', { blank: true });
+    y += 6;
     y = drawRow(doc, y, 'Name:', '', { blank: true });
     y = drawRow(doc, y, 'Address:', '', { blank: true });
     return y + SECTION_GAP;
