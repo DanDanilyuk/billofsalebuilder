@@ -77,7 +77,7 @@ body {
   text-align: center;
   border-bottom: 1px solid var(--subtle);
 }
-.brand { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.brand { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
 .brand-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
 .theme-toggle {
