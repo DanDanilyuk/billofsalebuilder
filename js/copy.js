@@ -166,8 +166,8 @@ export const COPY = {
       label: "Odometer accuracy",
       req: true,
       options: {
-        actual: "Reflects actual mileage",
-        not_actual: "Does not reflect actual mileage",
+        actual: "Actual mileage",
+        not_actual: "Not actual mileage",
         exceeds: "Exceeds mechanical limits",
       },
     },

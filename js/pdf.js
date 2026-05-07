@@ -42,8 +42,8 @@ const NOTARY_LABEL_W = 120;
 // Static lookups.
 const TYPE_LABEL = { motor: 'Motor vehicle', trailer: 'Trailer', boat: 'Boat' };
 const ODO_STATUS = {
-  actual: 'Reflects actual mileage',
-  not_actual: 'Does not reflect actual mileage',
+  actual: 'Actual mileage',
+  not_actual: 'Not actual mileage',
   exceeds: 'Exceeds mechanical limits',
 };
 
