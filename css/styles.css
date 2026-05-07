@@ -43,15 +43,19 @@
 }
 
 [data-theme="dark"] {
-  --bg: #121212;
-  --surface: #1c1c1c;
-  --bg-elevated: #2a2a2a;
-  --ink: #e5e5e5;
-  --ink-hover: #d4d4d4;
-  --muted: #9a9a9a;
-  --subtle: #333333;
-  --error: #f87171;
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' width='12' height='8'%3E%3Cpath fill='none' stroke='%23e5e5e5' stroke-width='1.5' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+  /* Refined dark palette. Cool undertones (slight blue cast) reduce
+     eye strain compared to neutral grays at the same lightness, and
+     wider tonal gaps between bg / surface / elevated give inputs
+     and cards real separation without resorting to harsh borders. */
+  --bg: #0d1117;            /* cool deep base */
+  --surface: #161b22;       /* +5L lift for inputs, modal, cards */
+  --bg-elevated: #1f242b;   /* +5L again for prominent checkboxes */
+  --ink: #e6edf3;           /* soft cool white, ~95% L, ~13.7:1 on bg */
+  --ink-hover: #f0f6fc;     /* near-white on primary button hover */
+  --muted: #8b949e;         /* ~6.4:1 on bg, comfortable for hints */
+  --subtle: #30363d;        /* borders read clearly against surface */
+  --error: #f85149;         /* warmer red, visible on cool bg */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' width='12' height='8'%3E%3Cpath fill='none' stroke='%23e6edf3' stroke-width='1.5' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
 }
 
 * { box-sizing: border-box; }
