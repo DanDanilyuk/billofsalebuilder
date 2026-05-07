@@ -1,7 +1,6 @@
 // js/storage.js
 //
 // localStorage persistence for the wizard's draft state.
-// Schema version: 2. Bump KEY suffix or `meta.version` if the shape changes.
 //
 // Public API:
 //   defaultState()        -> a fresh state object
@@ -9,8 +8,7 @@
 //   saveState(state)      -> writes state under KEY, stamps meta.updatedAt
 //   clearState()          -> removes the key
 
-const KEY_V1 = 'va-bill-of-sale:draft:v1';
-const KEY    = 'va-bill-of-sale:draft:v2';
+const KEY = 'billofsalebuilder:draft';
 
 export function defaultState() {
   return {
@@ -32,7 +30,7 @@ export function defaultState() {
     },
     seller: {
       firstName: '', middleName: '', lastName: '',
-      street: '', street2: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      street: '', street2: '', city: '', state: '', zip: '', phone: '', license: '',
       skipFill: false,
       // Joint-title support: when hasCoOwner is true, the form shows a second
       // set of fields for the co-owner and the PDF prints them.
@@ -42,18 +40,18 @@ export function defaultState() {
       coOwnerSameAddress: false,
       coOwner: {
         firstName: '', middleName: '', lastName: '',
-        street: '', street2: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+        street: '', street2: '', city: '', state: '', zip: '', phone: '', license: '',
       },
     },
     buyer: {
       firstName: '', middleName: '', lastName: '',
-      street: '', street2: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+      street: '', street2: '', city: '', state: '', zip: '', phone: '', license: '',
       skipFill: false,
       hasCoOwner: false,
       coOwnerSameAddress: false,
       coOwner: {
         firstName: '', middleName: '', lastName: '',
-        street: '', street2: '', city: '', state: 'VA', zip: '', phone: '', license: '',
+        street: '', street2: '', city: '', state: '', zip: '', phone: '', license: '',
       },
     },
     sale: {
@@ -69,7 +67,6 @@ export function defaultState() {
       notaryUserSet: false,
     },
     meta: {
-      version: 2,
       // Empty until the user picks a state on Step 1; validators block
       // advancement and applyStateChrome() shows a neutral footer.
       usState: '',
@@ -82,30 +79,7 @@ export function defaultState() {
 export function loadState(fallback) {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.meta?.version === 2) return parsed;
-    }
-    // v1 -> v2 migration: roll forward existing draft data, infer VA + Seller.
-    const v1Raw = localStorage.getItem(KEY_V1);
-    if (v1Raw) {
-      const v1 = JSON.parse(v1Raw);
-      if (v1?.meta?.version === 1) {
-        const migrated = structuredClone(fallback);
-        for (const k of ['vehicle', 'seller', 'buyer', 'sale']) {
-          if (v1[k]) Object.assign(migrated[k], v1[k]);
-        }
-        migrated.meta = {
-          version: 2,
-          usState: 'VA',
-          role: 'seller',
-          updatedAt: new Date().toISOString(),
-        };
-        try { localStorage.setItem(KEY, JSON.stringify(migrated)); } catch {}
-        try { localStorage.removeItem(KEY_V1); } catch {}
-        return migrated;
-      }
-    }
+    if (raw) return JSON.parse(raw);
     return structuredClone(fallback);
   } catch {
     return structuredClone(fallback);
@@ -114,7 +88,6 @@ export function loadState(fallback) {
 
 export function saveState(state) {
   if (!state.meta) state.meta = {};
-  state.meta.version = 2;
   state.meta.updatedAt = new Date().toISOString();
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
@@ -127,7 +100,6 @@ export function saveState(state) {
 export function clearState() {
   try {
     localStorage.removeItem(KEY);
-    localStorage.removeItem(KEY_V1);
   } catch (err) {
     console.warn('clearState failed:', err);
   }

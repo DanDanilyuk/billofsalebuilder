@@ -395,7 +395,7 @@ export function buildBillOfSalePdf(state) {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   let y = MARGIN;
 
-  const usState = getState(state.meta?.usState || 'VA');
+  const usState = getState(state.meta?.usState);
   const subtitle = usState.honorific
     ? `${usState.honorific} of ${usState.name}`
     : usState.name;

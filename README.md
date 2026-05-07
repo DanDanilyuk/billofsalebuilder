@@ -82,7 +82,7 @@ Phone numbers, driver's license / ID numbers, and Apt / Suite / Unit are optiona
 
 ## State-aware behavior
 
-- **Honorific**: PDF subtitle reads "Commonwealth of Virginia" for VA / KY / MA / PA, "District of Columbia" (no "of"), and "State of {Name}" for the other 46.
+- **Honorific**: PDF subtitle uses "Commonwealth of {Name}" for KY / MA / PA / VA, "District of Columbia" (no "of"), and "State of {Name}" for the other 46.
 - **Notary**: Only states whose `notary` value is `'required'` auto-check the notary block; `'recommended'` and `'optional'` leave the toggle visible but unchecked. `'not_required'` hides the toggle entirely.
 - **Odometer threshold**: Federal post-2021 rule (49 CFR 580) sets the disclosure threshold at 20 model years. Vehicles older than that drop the certification sentence from the PDF acknowledgment.
 - **DMV reference**: Footer of the PDF cites the state's official BoS form (when one exists) and links to its DMV title-transfer page.

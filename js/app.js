@@ -418,8 +418,8 @@ function buildSearchSelect(field, currentValue) {
     });
     // Don't auto-highlight on filter change. Enter/Tab fall back to the first
     // visible match when nothing is highlighted (handled in keydown), so users
-    // who type "Virginia" + Enter commit Virginia and ArrowDown moves the
-    // highlight to index 0 (Virginia) rather than skipping past it.
+    // who type "California" + Enter commit California and ArrowDown moves the
+    // highlight to index 0 (California) rather than skipping past it.
     optionEls.forEach((o) => o.setAttribute('aria-selected', 'false'));
     highlighted = -1;
   }
@@ -467,8 +467,8 @@ function buildSearchSelect(field, currentValue) {
       if (visible.length === 0) return;
       e.preventDefault();
       // If the user has explicitly highlighted a row, commit that. Otherwise
-      // commit the first visible match - so "Virginia" + Enter commits
-      // Virginia rather than skipping over it.
+      // commit the first visible match - so "California" + Enter commits
+      // California rather than skipping over it.
       const target = (highlighted >= 0 && visible[highlighted]) ? visible[highlighted] : visible[0];
       commit(target.dataset.value);
     } else if (e.key === 'Escape') {
@@ -480,7 +480,7 @@ function buildSearchSelect(field, currentValue) {
       // On Tab, accept the highlighted option if any so a quick type-and-tab
       // workflow commits cleanly. With no highlight, fall back to the first
       // visible match when the user has typed something - that preserves the
-      // "Virginia" + Tab typeahead path. An empty input on Tab just reverts.
+      // "California" + Tab typeahead path. An empty input on Tab just reverts.
       const visible = visibleOptions();
       if (highlighted >= 0 && visible[highlighted]) {
         commit(visible[highlighted].dataset.value);
@@ -875,8 +875,9 @@ function renderPreview() {
 function downloadFilename() {
   const last = (state.seller?.lastName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const date = state.sale?.date || new Date().toISOString().slice(0, 10);
-  const prefix = String(state.meta?.usState || 'va').toLowerCase();
-  return `${prefix}-bill-of-sale-${last || 'seller'}-${date}.pdf`;
+  const stateAbbr = String(state.meta?.usState || '').toLowerCase();
+  const prefix = stateAbbr ? `${stateAbbr}-` : '';
+  return `${prefix}bill-of-sale-${last || 'seller'}-${date}.pdf`;
 }
 
 // ---- helpers -------------------------------------------------------------

@@ -10,8 +10,8 @@ export const COPY = {
   app: {
     title: "Vehicle Bill of Sale",
     // Subtitle is rendered dynamically by app.js using the selected state's
-    // honorific and name (e.g. "Commonwealth of Virginia", "State of California",
-    // "District of Columbia").
+    // honorific and name (e.g. "State of California", "Commonwealth of
+    // Pennsylvania", "District of Columbia").
     subtitleTemplate: "{honorific} of {name}",
     subtitleNoHonorific: "{name}",
     footerDisclaimerTemplate: "Not a substitute for {name} DMV title transfer requirements.",
@@ -255,7 +255,6 @@ export const COPY = {
   },
   pdf: {
     title: "VEHICLE BILL OF SALE",
-    subtitle: "Commonwealth of Virginia",
     sellerHeading: "SELLER",
     buyerHeading: "BUYER",
     vehicleHeading: "VEHICLE",
@@ -268,6 +267,5 @@ export const COPY = {
     sellerSignatureLabel: "Seller signature",
     buyerSignatureLabel: "Buyer signature",
     dateLabel: "Date",
-    footerDisclaimer: "Generated {timestamp}. Not a substitute for Virginia DMV title transfer requirements.",
   },
 };
