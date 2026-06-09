@@ -89,30 +89,18 @@ function ensureSpace(doc, y, needed) {
   return y;
 }
 
-// COPY key reads tolerate either the legacy numeric layout (step1 / step4)
-// or the semantic layout shipped by wizard-engineer (vehicle / sale).
-// Whichever is present wins; this keeps pdf.js working through the
-// rename rollout without coupling shipping order.
-function vehicleCopy() {
-  return COPY.vehicle || COPY.step1 || {};
-}
-
-function saleCopy() {
-  return COPY.sale || COPY.step4 || {};
-}
-
 function subTypeLabel(vehicle) {
   if (!vehicle.subType) return '';
   if (vehicle.subType === 'other') {
     return vehicle.subTypeOther?.trim() || 'Other';
   }
-  const map = vehicleCopy().subType?.[vehicle.type] || {};
+  const map = COPY.vehicle.subType?.[vehicle.type] || {};
   return map[vehicle.subType] || vehicle.subType;
 }
 
 function hullMaterialLabel(key) {
   if (!key) return '';
-  const opts = vehicleCopy().hullMaterial?.options || {};
+  const opts = COPY.vehicle.hullMaterial?.options || {};
   return opts[key] || key;
 }
 
@@ -120,7 +108,7 @@ function paymentLabel(sale) {
   if (sale.payment === 'other') {
     return sale.paymentOther?.trim() || 'Other';
   }
-  const opts = saleCopy().payment?.options || {};
+  const opts = COPY.sale.payment?.options || {};
   return opts[sale.payment] || sale.payment || '';
 }
 
