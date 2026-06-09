@@ -828,7 +828,33 @@ function showModal(key) {
       else if (e.target.closest('[data-modal-overlay]')) cleanup(false);
     };
     const onKey = (e) => {
-      if (e.key === 'Escape') cleanup(false);
+      if (e.key === 'Escape') { cleanup(false); return; }
+      if (e.key !== 'Tab') return;
+      // Trap focus inside the dialog while it's open so Tab / Shift+Tab can't
+      // wander into the form behind it. Collect the dialog's focusable controls
+      // (skipping disabled / hidden ones), then wrap focus at the boundaries.
+      const dialog = modal.querySelector('.modal__dialog');
+      if (!dialog) return;
+      const focusable = Array.from(
+        dialog.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.disabled && el.offsetParent !== null);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        // Shift+Tab off the first control (or focus that escaped the dialog) wraps to the last.
+        if (active === first || !dialog.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        // Tab off the last control wraps back to the first.
+        e.preventDefault();
+        first.focus();
+      }
     };
 
     modal.addEventListener('click', onClick);
