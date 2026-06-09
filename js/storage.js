@@ -61,6 +61,7 @@ export function defaultState() {
       paymentOther: '',
       priceNegotiable: false,
       includeNotary: false,
+      includeWitness: false,
       // Tracks whether the user has explicitly toggled the notary checkbox.
       // Once true, picking a different US state will not auto-flip the
       // includeNotary value.

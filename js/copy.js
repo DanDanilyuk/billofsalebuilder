@@ -236,6 +236,7 @@ export const COPY = {
     paymentOther: { label: "Describe payment", req: true },
     priceNegotiable: { label: "Negotiable - leave sale price blank", req: false },
     includeNotary: { label: "Add notary block to the PDF", req: false },
+    includeWitness: { label: "Add witness signature lines to the PDF", req: false },
   },
   review: {
     title: "Review & download",
@@ -293,5 +294,10 @@ export const COPY = {
       notarySig: "Notary signature:",
       commission: "Commission expires:",
     },
+    witnessHeading: "WITNESSES",
+    witness1Signature: "Witness 1 signature",
+    witness1Name: "Witness 1 printed name",
+    witness2Signature: "Witness 2 signature",
+    witness2Name: "Witness 2 printed name",
   },
 };

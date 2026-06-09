@@ -382,6 +382,41 @@ function drawSignatures(doc, y) {
   return lineY + labelOffset + SECTION_GAP;
 }
 
+// Optional witness block (state.sale.includeWitness). Two witnesses, each a
+// single row carrying a signature line on the left and a printed-name line on
+// the right - same geometry/idiom as drawSignatures' sig-line + date-line row.
+function drawWitness(doc, y) {
+  y = drawSectionHeading(doc, y, COPY.pdf.witnessHeading);
+
+  const sigLineW = 230;        // signature line width
+  const nameLineW = 200;       // printed-name line width
+  const lineGap = 16;          // gap between the signature and name lines
+  const sigSpace = 30;         // vertical space above the line for handwriting
+  const labelOffset = 11;      // distance from line down to label baseline
+  const blockGap = 24;         // gap between the two witness rows
+
+  function block(lineY, sigLabel, nameLabel) {
+    setStroke(doc, INK);
+    doc.setLineWidth(0.6);
+    doc.line(BODY_INDENT, lineY, BODY_INDENT + sigLineW, lineY);
+    const nameX = BODY_INDENT + sigLineW + lineGap;
+    doc.line(nameX, lineY, nameX + nameLineW, lineY);
+
+    doc.setFont('helvetica', 'normal').setFontSize(9);
+    setColor(doc, MUTED);
+    doc.text(sigLabel, BODY_INDENT, lineY + labelOffset);
+    doc.text(nameLabel, nameX, lineY + labelOffset);
+    setColor(doc, INK);
+  }
+
+  let lineY = y + sigSpace;
+  block(lineY, COPY.pdf.witness1Signature, COPY.pdf.witness1Name);
+  lineY += labelOffset + blockGap + sigSpace;
+  block(lineY, COPY.pdf.witness2Signature, COPY.pdf.witness2Name);
+
+  return lineY + labelOffset + SECTION_GAP;
+}
+
 function drawFooter(doc, usState) {
   const stamp = new Date().toLocaleString();
   const stateName = usState?.name || 'state';
@@ -423,6 +458,7 @@ export function buildBillOfSalePdf(state) {
         .replace('{name}', usState.name)
     : COPY.app.subtitleNoHonorific.replace('{name}', usState.name);
   const includeNotary = state.sale?.includeNotary === true;
+  const includeWitness = state.sale?.includeWitness === true;
 
   // Title block
   doc.setFont('helvetica', 'bold').setFontSize(18);
@@ -456,8 +492,8 @@ export function buildBillOfSalePdf(state) {
   y = ensureSpace(doc, y, SECTION_HEIGHT.ack);
   y = drawAck(doc, y, state.sale, state.vehicle, usState);
 
-  // Reserve room for the optional notary block + signature block + footer;
-  // if it won't fit, push to a new page and re-anchor.
+  // Reserve room for the optional notary block + signature block + optional
+  // witness block + footer; if it won't fit, push to a new page and re-anchor.
   const SIG_BLOCK_HEIGHT = 14    // heading row
                          + 30    // top space for first line
                          + 11    // first label
@@ -468,7 +504,19 @@ export function buildBillOfSalePdf(state) {
   const NOTARY_BLOCK_HEIGHT = includeNotary
     ? (HEADING_GAP + 4 * BODY_LINE_H + SECTION_GAP)
     : 0;
-  if (y + NOTARY_BLOCK_HEIGHT + SIG_BLOCK_HEIGHT > PAGE_H - FOOTER_RESERVE) {
+  // Witness block mirrors the signature block (heading + two rows), so it
+  // reserves the same height when present.
+  const WITNESS_BLOCK_HEIGHT = includeWitness
+    ? (14    // heading row
+       + 30    // top space for witness 1 row
+       + 11    // witness 1 labels
+       + 24    // gap
+       + 30    // top space for witness 2 row
+       + 11    // witness 2 labels
+       + SECTION_GAP)
+    : 0;
+  if (y + NOTARY_BLOCK_HEIGHT + SIG_BLOCK_HEIGHT + WITNESS_BLOCK_HEIGHT
+      > PAGE_H - FOOTER_RESERVE) {
     doc.addPage();
     y = MARGIN;
   }
@@ -476,6 +524,9 @@ export function buildBillOfSalePdf(state) {
     y = drawNotary(doc, y, usState);
   }
   y = drawSignatures(doc, y);
+  if (includeWitness) {
+    y = drawWitness(doc, y);
+  }
 
   // Footer goes on EVERY page (anchored to each page's bottom), so multi-page
   // documents carry the disclaimer + DMV reference on each sheet, not just the

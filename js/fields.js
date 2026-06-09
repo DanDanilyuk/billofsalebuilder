@@ -233,6 +233,17 @@ function saleFields(state) {
     });
   }
 
+  // Witness signature lines are an option in every jurisdiction, so this
+  // checkbox is appended last and unconditionally (after the state-dependent
+  // notary toggle). It doesn't add or remove other fields, so it is NOT a
+  // RERENDER path - it rides the in-place checkbox render.
+  fields.push({
+    path: 'sale.includeWitness',
+    label: c.includeWitness.label,
+    req: false,
+    kind: 'checkbox',
+  });
+
   return fields;
 }
 
