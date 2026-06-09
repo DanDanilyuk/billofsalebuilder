@@ -1006,6 +1006,25 @@ function updateProgress() {
 
 // ---- preview / download --------------------------------------------------
 
+// One-shot lazy loader for the vendored jsPDF UMD bundle. It's only needed at
+// Step 6, so we inject the <script> on first need instead of blocking first
+// paint on every page view. Resolves immediately if jsPDF is already present;
+// on load failure the promise is cleared so a later attempt can retry.
+let jsPdfPromise = null;
+function loadJsPdf() {
+  if (window.jspdf) return Promise.resolve();
+  if (!jsPdfPromise) {
+    jsPdfPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'lib/jspdf.umd.min.js';
+      s.onload = resolve;
+      s.onerror = () => { jsPdfPromise = null; reject(new Error('jsPDF failed to load')); };
+      document.head.appendChild(s);
+    });
+  }
+  return jsPdfPromise;
+}
+
 // Lazily creates (once) and returns the Step 6 build-error banner. index.html
 // is owned elsewhere, so the element is managed here: a role="alert" div appended
 // to the Step 6 section (the iframe's parent) so screen readers announce it when
@@ -1023,12 +1042,15 @@ function getPreviewErrorEl() {
   return el;
 }
 
-function renderPreview() {
+async function renderPreview() {
   const iframe = document.querySelector('.pdf-preview');
   const errEl = getPreviewErrorEl();
   const hintEl = document.querySelector('[data-pdf-hint]');
   const openEl = document.querySelector('[data-action="open-pdf"]');
   try {
+    // Lazy-load jsPDF on first preview. A load failure rejects here and falls
+    // into the same catch as a build error, so the user sees the error banner.
+    await loadJsPdf();
     const blob = buildBillOfSalePdf(state);
     if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
     lastBlobUrl = URL.createObjectURL(blob);
@@ -1061,6 +1083,11 @@ function renderPreview() {
       errEl.hidden = true;
       errEl.textContent = '';
     }
+    // renderPreview() is async now, so renderStep()'s updateActions() already
+    // ran against a stale flag. Re-sync the action buttons to the real outcome,
+    // but only if the user is still on Step 6 (a late resolve must not mutate
+    // the UI after they navigated away).
+    if (currentStep === TOTAL_STEPS) updateActions(TOTAL_STEPS);
   } catch (err) {
     console.error('PDF preview build failed:', err);
     // Surface a visible, accessible message and hide the blank iframe. The
@@ -1074,6 +1101,9 @@ function renderPreview() {
     // No document to open or describe - drop the new-tab href and hide the hint.
     if (openEl) openEl.removeAttribute('href');
     if (hintEl) hintEl.hidden = true;
+    // Re-sync actions to the failed outcome (see success branch); guard against
+    // a late resolve after the user left Step 6.
+    if (currentStep === TOTAL_STEPS) updateActions(TOTAL_STEPS);
   }
 }
 
