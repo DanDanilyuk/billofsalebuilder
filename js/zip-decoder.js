@@ -29,6 +29,7 @@ export async function decodeZip(input) {
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
 
   let result = null;
+  let completed = false;
   try {
     const res = await fetch(`${ENDPOINT}/${zip}`, { signal: ctrl.signal });
     if (res.ok) {
@@ -38,12 +39,16 @@ export async function decodeZip(input) {
       const state = place?.['state abbreviation'];
       if (city && state) result = { city: String(city), state: String(state) };
     }
+    // An HTTP response arrived (including 404 for an invalid ZIP): cacheable.
+    completed = true;
   } catch {
+    // Network error or the abort timeout: NOT cacheable - a transient blip
+    // must not kill autofill for this ZIP for the rest of the session.
     result = null;
   } finally {
     clearTimeout(timer);
   }
 
-  cache.set(zip, result);
+  if (completed) cache.set(zip, result);
   return result;
 }
