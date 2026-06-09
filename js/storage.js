@@ -10,6 +10,16 @@
 
 const KEY = 'billofsalebuilder:draft';
 
+// Local-calendar YYYY-MM-DD. Uses the browser's local date parts rather than
+// toISOString() (which is UTC) so an evening user at a negative UTC offset
+// doesn't get tomorrow's date. Shared by defaultState() and app.js.
+export function localDateString(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export function defaultState() {
   return {
     vehicle: {
@@ -56,7 +66,7 @@ export function defaultState() {
     },
     sale: {
       price: '',
-      date: new Date().toISOString().slice(0, 10),
+      date: localDateString(),
       payment: 'cash',
       paymentOther: '',
       priceNegotiable: false,

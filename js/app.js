@@ -19,7 +19,7 @@
 //   6: Review    - PDF preview + download
 
 import { COPY } from './copy.js';
-import { defaultState, loadState, saveState, clearState } from './storage.js';
+import { defaultState, loadState, saveState, clearState, localDateString } from './storage.js';
 import { fieldsForStep, youPrefix, otherPrefix } from './fields.js';
 import { validators } from './validation.js';
 import { buildBillOfSalePdf } from './pdf.js';
@@ -1062,7 +1062,7 @@ function downloadFilename() {
   // with a skip-filled seller doesn't get a "...-seller" / "...-undefined" name.
   const youP = youPrefix(state);
   const last = (state[youP]?.lastName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const date = state.sale?.date || new Date().toISOString().slice(0, 10);
+  const date = state.sale?.date || localDateString();
   const stateAbbr = String(state.meta?.usState || '').toLowerCase();
   const prefix = stateAbbr ? `${stateAbbr}-` : '';
   // Fallback to the role label ('seller' / 'buyer') when no last name is given.
