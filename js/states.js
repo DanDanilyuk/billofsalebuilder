@@ -727,6 +727,29 @@ export const STATES = {
 
 export const STATE_LIST = Object.values(STATES).sort((a, b) => a.name.localeCompare(b.name));
 
+// Neutral generic jurisdiction returned by getState() for any unknown or
+// empty abbr. Validation blocks reaching the PDF step without a real state,
+// so this is defensive-only - but if it ever fires it must NOT masquerade as
+// a real jurisdiction (the old VA fallback silently stamped a Virginia
+// honorific, DMV URL, and form name onto a stateless document). Carries every
+// field pdf.js / app.js read, with safe generic values:
+//   - name/abbr/honorific '' -> PDF subtitle renders blank, drawFooter falls
+//     back to its own 'state' placeholder when name is falsy
+//   - notary 'not_required'  -> no notary auto-default
+//   - odometerThresholdYears 20 -> matches the global federal default
+const NEUTRAL_STATE = {
+  name: '',
+  abbr: '',
+  honorific: '',
+  notary: 'not_required',
+  odometerThresholdYears: 20,
+  bosFormName: null,
+  filingDeadlineDays: null,
+  dmvUrl: '',
+  notes: '',
+  sources: [],
+};
+
 export function getState(abbr) {
-  return STATES[String(abbr || '').toUpperCase()] || STATES.VA;
+  return STATES[String(abbr || '').toUpperCase()] || NEUTRAL_STATE;
 }
