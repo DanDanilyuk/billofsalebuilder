@@ -92,7 +92,11 @@
   </header>
 
   <main class="wizard">
-    <div class="progress" aria-label="Wizard progress">
+    <!-- role="progressbar" actually exposes the aria-label ("Step N of 6",
+         set by app.js) to assistive tech; on a bare div it is ignored. The
+         segment spans are presentational under this role. -->
+    <div class="progress" role="progressbar" aria-label="Wizard progress"
+         aria-valuemin="1" aria-valuemax="6" aria-valuenow="1">
       <span class="progress__seg" data-step="1"></span>
       <span class="progress__seg" data-step="2"></span>
       <span class="progress__seg" data-step="3"></span>

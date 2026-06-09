@@ -1091,13 +1091,16 @@ function updateProgress() {
     if (n === currentStep) seg.setAttribute('aria-current', 'step');
     else seg.removeAttribute('aria-current');
   });
-  // Dynamic, descriptive label so SRs announce "Step N of 6" as the user moves.
+  // Dynamic, descriptive label so SRs announce "Step N of 6" as the user
+  // moves. The container carries role="progressbar" (index.html), so keep
+  // aria-valuenow in sync with the label.
   const prog = document.querySelector('.progress');
   if (prog) {
     prog.setAttribute(
       'aria-label',
       COPY.app.progressLabel.replace('{n}', currentStep).replace('{total}', TOTAL_STEPS)
     );
+    prog.setAttribute('aria-valuenow', String(currentStep));
   }
 }
 
