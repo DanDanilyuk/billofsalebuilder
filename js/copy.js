@@ -20,6 +20,21 @@ export const COPY = {
     subtitleNoState: "Select a state",
     footerDisclaimerNoState: "Not legal advice. Verify with your state DMV before relying on this document.",
   },
+  // Step 1 state-guidance card. Rendered by app.js renderStateGuidance() from
+  // the selected state's STATES entry. {name} = state name, {days} = the
+  // state's filingDeadlineDays. The notary line is keyed by the state's
+  // notary requirement ('required' / 'recommended' / 'optional' / 'not_required').
+  stateGuidance: {
+    headingTemplate: "{name} guidance",
+    filingDeadlineTemplate: "Transfer the title within {days} days of the sale to stay within {name}'s deadline.",
+    notary: {
+      required: "{name} requires this bill of sale to be notarized. A notary block is included in your PDF.",
+      recommended: "{name} recommends notarizing this bill of sale. You can add a notary block in the sale terms step.",
+      optional: "Notarization is optional in {name}. You can add a notary block in the sale terms step if you want one.",
+      not_required: "{name} does not require notarization for this bill of sale.",
+    },
+    disclaimerTemplate: "Requirements can change and may vary by county. Confirm the details with the {name} DMV before you rely on this document.",
+  },
   actions: {
     back: "Back",
     continue: "Continue",

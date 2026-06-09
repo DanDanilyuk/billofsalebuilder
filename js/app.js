@@ -168,6 +168,10 @@ function applyStateChrome() {
   const sub = document.querySelector('[data-state-subtitle]');
   const dis = document.querySelector('[data-page-disclaimer]');
 
+  // Step 1 guidance card. Called before the no-state early return below so it
+  // both populates (state set) and clears/hides (no state) on every pass.
+  renderStateGuidance();
+
   // No state picked yet: neutral chrome. Subtitle reads a placeholder so the
   // header keeps its height and the page doesn't reflow once a state is
   // committed. Footer falls back to a generic line.
@@ -192,6 +196,64 @@ function applyStateChrome() {
 function setText(scope, selector, value) {
   const el = scope.querySelector(selector);
   if (el) el.textContent = value;
+}
+
+// Populates the Step 1 state-guidance card from the selected state's STATES
+// entry + COPY.stateGuidance. Built with textContent on real child nodes (never
+// innerHTML) since states.js prose flows in unescaped. Hidden + emptied when no
+// state is picked. Lines render conditionally: filing deadline only for a numeric
+// filingDeadlineDays, notes only when present, notary keyed by the state's rule.
+function renderStateGuidance() {
+  const box = document.querySelector('[data-state-guidance]');
+  if (!box) return;
+  const abbr = state.meta?.usState || '';
+
+  // No state yet: clear and hide so Step 1 collapses back to just the form.
+  if (!abbr) {
+    box.replaceChildren();
+    box.hidden = true;
+    return;
+  }
+
+  const stateData = getState(abbr);
+  const copy = COPY.stateGuidance;
+  const name = stateData.name;
+  // Interpolate the per-state name (and filing-deadline day count) into a template.
+  const fill = (tpl) => String(tpl || '')
+    .replace(/\{name\}/g, name)
+    .replace(/\{days\}/g, String(stateData.filingDeadlineDays));
+
+  const frag = document.createDocumentFragment();
+
+  const heading = document.createElement('h3');
+  heading.className = 'state-guidance__heading';
+  heading.textContent = fill(copy.headingTemplate);
+  frag.appendChild(heading);
+
+  // Append a muted body line; skips empty text. extraClass distinguishes the
+  // de-emphasized disclaimer line.
+  const addLine = (text, extraClass) => {
+    if (!text) return;
+    const p = document.createElement('p');
+    p.className = 'state-guidance__line' + (extraClass ? ' ' + extraClass : '');
+    p.textContent = text;
+    frag.appendChild(p);
+  };
+
+  // Filing deadline - only when the state defines a numeric deadline.
+  if (typeof stateData.filingDeadlineDays === 'number') {
+    addLine(fill(copy.filingDeadlineTemplate));
+  }
+  // Notary - variant keyed by the state's requirement; skip if the key is unknown.
+  const notaryTpl = copy.notary && copy.notary[stateData.notary];
+  if (notaryTpl) addLine(fill(notaryTpl));
+  // State-specific notes - already prose in states.js, shown verbatim.
+  if (stateData.notes) addLine(stateData.notes);
+  // Disclaimer - always shown, de-emphasized.
+  addLine(fill(copy.disclaimerTemplate), 'state-guidance__disclaimer');
+
+  box.replaceChildren(frag);
+  box.hidden = false;
 }
 
 function renderForm(n) {

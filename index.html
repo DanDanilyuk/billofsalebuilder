@@ -164,6 +164,10 @@
       <h1 class="step__title" data-step-title></h1>
       <p class="step__sub" data-step-sub></p>
       <form class="step__form" data-step-form="1"><!-- fields injected by app.js --></form>
+      <!-- State-specific guidance. Lives in the section chrome (NOT the form),
+           so renderForm() clearing the form does not wipe it. Populated /
+           hidden by app.js renderStateGuidance() based on the selected state. -->
+      <div class="state-guidance" data-state-guidance hidden></div>
     </section>
 
     <section class="step" data-step="2" hidden>

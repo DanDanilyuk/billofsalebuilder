@@ -304,6 +304,39 @@ body {
   background: var(--surface);
 }
 
+/* ---- state guidance card (Step 1) --------------------------------------
+   Quiet info panel below the Step 1 form, populated once a state is picked.
+   Sits inside the wizard column; elevated surface + hairline border keeps it
+   distinct from the form without shouting. All color from tokens. */
+.state-guidance {
+  margin-top: var(--space-6);
+  padding: var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--subtle);
+  border-radius: var(--radius-md);
+}
+.state-guidance__heading {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.state-guidance__line {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+/* De-emphasized closing disclaimer, set off by a hairline rule. Placed after
+   .state-guidance__line so its margin wins at equal specificity. */
+.state-guidance__disclaimer {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--subtle);
+  font-size: 12px;
+}
+
 .page-footer {
   padding: var(--space-6) var(--space-4);
   text-align: center;
