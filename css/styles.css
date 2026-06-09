@@ -27,6 +27,9 @@
   --muted: #6b6b6b; /* >= 4.5:1 AA even on --bg-elevated (#f5f5f4: ~4.9:1) */
   --subtle: #e5e5e5;
   --error: #b91c1c;
+  --overlay: rgba(10, 10, 10, 0.4);
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.18);
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' width='12' height='8'%3E%3Cpath fill='none' stroke='%230a0a0a' stroke-width='1.5' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -55,6 +58,9 @@
   --muted: #8b949e;         /* ~6.4:1 on bg, comfortable for hints */
   --subtle: #30363d;        /* borders read clearly against surface */
   --error: #f85149;         /* warmer red, visible on cool bg */
+  --overlay: rgba(1, 4, 9, 0.65);                   /* stronger scrim - 40% black is weak on a dark bg */
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.5);      /* black shadows need more weight on #0d1117 */
+  --shadow-modal: 0 20px 50px rgba(0, 0, 0, 0.65);
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' width='12' height='8'%3E%3Cpath fill='none' stroke='%23e6edf3' stroke-width='1.5' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
 }
 
@@ -107,7 +113,7 @@ body {
   transition: color 0.15s, border-color 0.15s;
 }
 .icon-btn:hover { color: var(--ink); border-color: var(--subtle); }
-.icon-btn:focus-visible { outline: none; border-color: var(--ink); }
+.icon-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .icon-btn svg { width: 18px; height: 18px; display: block; }
 
 /* Theme toggle shares .icon-btn; only the sun/moon swap is specific to it. */
@@ -140,8 +146,6 @@ body {
 .field { margin-bottom: var(--space-4); }
 .field__label { display: block; font-size: 12px; font-weight: 500; margin-bottom: var(--space-1); }
 .field__label .req { color: var(--error); margin-left: 2px; }
-.field__row { display: flex; gap: var(--space-2); }
-.field__row > .field { flex: 1; }
 .field__hint { font-size: 11px; color: var(--muted); margin-top: var(--space-1); }
 .field__error { font-size: 12px; color: var(--error); margin-top: var(--space-1); display: none; }
 .field.is-error .field__error { display: block; }
@@ -221,7 +225,7 @@ body {
   overflow-y: auto;
   overscroll-behavior: contain;
   z-index: 10;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-pop);
 }
 .searchselect__list[hidden] { display: none; }
 .searchselect__option {
@@ -267,7 +271,7 @@ body {
 .modal__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(10, 10, 10, 0.4);
+  background: var(--overlay);
   cursor: pointer;
 }
 .modal__dialog {
@@ -278,7 +282,7 @@ body {
   padding: var(--space-6);
   width: 100%;
   max-width: 380px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-modal);
 }
 .modal__title {
   font-size: 18px;
