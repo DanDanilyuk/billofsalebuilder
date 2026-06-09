@@ -20,6 +20,9 @@
 // treats null as "couldn't decode" and falls back to manual entry.
 
 const ENDPOINT = 'https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues';
+// Abort a stalled vPIC request after 4s (mirrors zip-decoder) so the
+// "Decoding VIN..." hint can't hang for minutes on a dead connection.
+const TIMEOUT_MS = 4000;
 
 // NHTSA BodyClass strings (lowercase) -> our subType keys.
 const BODY_CLASS_MAP_MOTOR = {
@@ -98,14 +101,18 @@ function mapVehicleType(vt) {
 export async function decodeVin(vin, vehicleType = 'motor') {
   if (!vin || vin.length !== 17) return null;
   const url = `${ENDPOINT}/${encodeURIComponent(vin)}?format=json`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   let data;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: ctrl.signal });
     if (!res.ok) return null;
     const json = await res.json();
     data = json && Array.isArray(json.Results) ? json.Results[0] : null;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
   if (!data) return null;
 
