@@ -655,7 +655,10 @@ function onFieldChange(e) {
   saveState(state);
   clearFieldError(e.target);
 
-  if (path === 'vehicle.vin') triggerVinDecode();
+  // VIN decode fires on 'input' only: text inputs also emit 'change' on blur
+  // with the same value, which would re-issue an identical network request
+  // and (via the re-render below) yank focus back into the VIN field.
+  if (path === 'vehicle.vin' && e.type === 'input') triggerVinDecode();
 
   // ZIP -> city/state lookup. Fires only on blur (e.type==='change'), so it
   // doesn't hammer the API while the user is still typing. Fills city/state
@@ -828,6 +831,10 @@ async function runVinDecode(vin, type) {
   // Drop stale responses if the user kept typing.
   if (myToken !== vinDecodeToken) return;
   if (String(state.vehicle.vin || '').toUpperCase() !== vin) return;
+  // The vehicle step is 4 (STEP_KEY_BY_NUMBER). A decode resolving after the
+  // user navigated away must still update state, but must NOT re-render
+  // whatever step is now on screen (that would drop focus mid-typing there).
+  const onVehicleStep = () => currentStep === 4;
 
   if (!decoded) {
     // Clear the fields the decode would have controlled so the "fill manually"
@@ -837,9 +844,11 @@ async function runVinDecode(vin, type) {
       state.vehicle[k] = '';
     }
     saveState(state);
+    if (!onVehicleStep()) return;
+    const snap = captureFocus();
     renderForm(currentStep);
     setVinHint(COPY.vehicle?.vin?.status?.failed || '');
-    refocusVin();
+    restoreFocus(snap);
     return;
   }
 
@@ -852,28 +861,21 @@ async function runVinDecode(vin, type) {
     state.vehicle[k] = decoded[k] != null ? decoded[k] : '';
   }
   saveState(state);
+  if (!onVehicleStep()) return;
 
   // Re-render so the (possibly new) vehicle.type's field set + conditional
-  // fields (e.g. subTypeOther) appear/hide correctly. Restore focus to VIN.
+  // fields (e.g. subTypeOther) appear/hide correctly. Restore focus to
+  // wherever the user actually is - the VIN field if they're still in it,
+  // or the field they moved on to while the decode was in flight.
+  const snap = captureFocus();
   renderForm(currentStep);
   setVinHint(COPY.vehicle?.vin?.status?.decoded || '');
-
-  refocusVin();
+  restoreFocus(snap);
 
   setTimeout(() => {
     if (String(state.vehicle.vin || '').toUpperCase() !== vin) return;
     setVinHint(COPY.vehicle?.vin?.hint || '');
   }, VIN_DECODED_REVERT_MS);
-}
-
-function refocusVin() {
-  const vinInput = document.querySelector('[data-path="vehicle.vin"]');
-  if (!vinInput) return;
-  vinInput.focus({ preventScroll: true });
-  if (typeof vinInput.setSelectionRange === 'function') {
-    const len = vinInput.value.length;
-    vinInput.setSelectionRange(len, len);
-  }
 }
 
 function setVinHint(text) {
