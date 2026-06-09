@@ -359,6 +359,11 @@ function buildSearchSelect(field, currentValue, controlId) {
   const container = document.createElement('div');
   container.className = 'searchselect';
 
+  // Stable ids tie the combobox input to its listbox (aria-controls) and to the
+  // active option (aria-activedescendant). Derive from controlId so they stay
+  // unique across re-renders; fall back to a fresh fieldUid if it's absent.
+  const listId = (controlId || fieldUid(field.path)) + '-list';
+
   const input = document.createElement('input');
   input.className = 'input searchselect__input';
   // The label[for] from renderField targets this visible input.
@@ -367,16 +372,24 @@ function buildSearchSelect(field, currentValue, controlId) {
   input.autocomplete = 'off';
   input.spellcheck = false;
   input.placeholder = 'Type a state name...';
+  // Combobox pattern: announce the popover state and active option to SRs.
   input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('role', 'combobox');
+  input.setAttribute('aria-haspopup', 'listbox');
+  input.setAttribute('aria-controls', listId);
+  input.setAttribute('aria-expanded', 'false');
 
   const list = document.createElement('ul');
   list.className = 'searchselect__list';
+  list.id = listId;
   list.hidden = true;
   list.setAttribute('role', 'listbox');
 
   const optionEls = optionsData.map((s) => {
     const li = document.createElement('li');
     li.className = 'searchselect__option';
+    // Per-option id so aria-activedescendant can reference the highlighted row.
+    li.id = listId + '-opt-' + s.abbr;
     li.setAttribute('role', 'option');
     li.dataset.value = s.abbr;
     const nameSpan = document.createElement('span');
@@ -414,20 +427,29 @@ function buildSearchSelect(field, currentValue, controlId) {
   function setHighlight(idx) {
     optionEls.forEach((o) => o.setAttribute('aria-selected', 'false'));
     const visible = visibleOptions();
-    if (visible.length === 0) { highlighted = -1; return; }
+    if (visible.length === 0) {
+      highlighted = -1;
+      input.removeAttribute('aria-activedescendant');
+      return;
+    }
     highlighted = ((idx % visible.length) + visible.length) % visible.length;
     const target = visible[highlighted];
     target.setAttribute('aria-selected', 'true');
     target.scrollIntoView({ block: 'nearest' });
+    // Point the combobox at the highlighted row so SRs announce it.
+    input.setAttribute('aria-activedescendant', target.id);
   }
 
   function openList() {
     list.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
   }
   function closeList() {
     list.hidden = true;
     highlighted = -1;
     optionEls.forEach((o) => o.setAttribute('aria-selected', 'false'));
+    input.setAttribute('aria-expanded', 'false');
+    input.removeAttribute('aria-activedescendant');
   }
 
   function filterOptions(query) {
@@ -445,6 +467,7 @@ function buildSearchSelect(field, currentValue, controlId) {
     // highlight to index 0 (California) rather than skipping past it.
     optionEls.forEach((o) => o.setAttribute('aria-selected', 'false'));
     highlighted = -1;
+    input.removeAttribute('aria-activedescendant');
   }
 
   function commit(abbr) {
@@ -546,6 +569,11 @@ function bindGlobalSearchSelectClose() {
         .forEach((o) => o.setAttribute('aria-selected', 'false'));
       const input = ss.querySelector('.searchselect__input');
       const anchor = ss.querySelector('.searchselect__anchor');
+      // Mirror closeList() so the combobox state stays consistent on outside-click.
+      if (input) {
+        input.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+      }
       if (input && anchor) {
         const obj = STATES[anchor.value];
         input.value = obj ? obj.name : '';
