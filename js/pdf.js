@@ -59,13 +59,9 @@ const LABEL_W = 86;           // default width of inline labels like "Address:"
 // the notary block widens its label gutter via drawRow's `labelW` override.
 const NOTARY_LABEL_W = 120;
 
-// Static lookups.
-const TYPE_LABEL = { motor: 'Motor vehicle', trailer: 'Trailer', boat: 'Boat' };
-const ODO_STATUS = {
-  actual: 'Actual mileage',
-  not_actual: 'Not actual mileage',
-  exceeds: 'Exceeds mechanical limits',
-};
+// Vehicle-type and odometer-status labels are read straight from COPY.vehicle
+// (type.options / odometerStatus.options) at the call sites in drawVehicle, so
+// there are no duplicate lookup tables to drift out of sync.
 
 // ---- helpers --------------------------------------------------------------
 
@@ -208,13 +204,14 @@ function partyFullName(p) {
 }
 
 function drawPartyEntry(doc, y, p) {
-  y = drawRow(doc, y, 'Name:', partyFullName(p));
-  y = drawRow(doc, y, 'Address:', partyAddressLine(p));
+  const rows = COPY.pdf.rows;
+  y = drawRow(doc, y, rows.name, partyFullName(p));
+  y = drawRow(doc, y, rows.address, partyAddressLine(p));
   if (p.phone && String(p.phone).trim()) {
-    y = drawRow(doc, y, 'Phone:', p.phone);
+    y = drawRow(doc, y, rows.phone, p.phone);
   }
   if (p.license && String(p.license).trim()) {
-    y = drawRow(doc, y, 'DL/ID:', p.license);
+    y = drawRow(doc, y, rows.dlId, p.license);
   }
   return y;
 }
@@ -225,11 +222,12 @@ function drawParty(doc, y, heading, party) {
   // rows so co-owners (joint title) both have a slot. Phone / DL-ID are
   // omitted in this mode (those rows are optional anyway).
   if (party && party.skipFill) {
-    y = drawRow(doc, y, 'Name:', '', { blank: true });
-    y = drawRow(doc, y, 'Address:', '', { blank: true });
+    const rows = COPY.pdf.rows;
+    y = drawRow(doc, y, rows.name, '', { blank: true });
+    y = drawRow(doc, y, rows.address, '', { blank: true });
     y += 6;
-    y = drawRow(doc, y, 'Name:', '', { blank: true });
-    y = drawRow(doc, y, 'Address:', '', { blank: true });
+    y = drawRow(doc, y, rows.name, '', { blank: true });
+    y = drawRow(doc, y, rows.address, '', { blank: true });
     return y + SECTION_GAP;
   }
   y = drawPartyEntry(doc, y, party);
@@ -254,6 +252,8 @@ function drawParty(doc, y, heading, party) {
 }
 
 function drawVehicle(doc, y, vehicle) {
+  const rows = COPY.pdf.rows;
+  const lengthValue = (v) => `${v} ${COPY.pdf.lengthUnit}`;
   y = drawSectionHeading(doc, y, COPY.pdf.vehicleHeading);
 
   const sub = subTypeLabel(vehicle);
@@ -262,44 +262,46 @@ function drawVehicle(doc, y, vehicle) {
     .filter(Boolean);
   const desc = sub ? `${descParts.join(' ')}, ${sub}` : descParts.join(' ');
 
-  y = drawRow(doc, y, 'Type:', TYPE_LABEL[vehicle.type] || vehicle.type || '');
-  y = drawRow(doc, y, 'Description:', desc);
+  const typeLabel = COPY.vehicle.type.options[vehicle.type] || vehicle.type || '';
+  y = drawRow(doc, y, rows.type, typeLabel);
+  y = drawRow(doc, y, rows.description, desc);
 
   if (vehicle.type === 'boat') {
-    y = drawRow(doc, y, 'HIN:', (vehicle.hin || '').toUpperCase(), { mono: true });
+    y = drawRow(doc, y, rows.hin, (vehicle.hin || '').toUpperCase(), { mono: true });
     if (vehicle.length && String(vehicle.length).trim()) {
-      y = drawRow(doc, y, 'Length:', `${vehicle.length} ft`);
+      y = drawRow(doc, y, rows.length, lengthValue(vehicle.length));
     }
     if (vehicle.hullMaterial) {
-      y = drawRow(doc, y, 'Hull:', hullMaterialLabel(vehicle.hullMaterial));
+      y = drawRow(doc, y, rows.hull, hullMaterialLabel(vehicle.hullMaterial));
     }
   } else if (vehicle.type === 'trailer') {
-    y = drawRow(doc, y, 'VIN / Serial:', (vehicle.vin || '').toUpperCase(), { mono: true });
+    y = drawRow(doc, y, rows.vinSerial, (vehicle.vin || '').toUpperCase(), { mono: true });
     if (vehicle.length && String(vehicle.length).trim()) {
-      y = drawRow(doc, y, 'Length:', `${vehicle.length} ft`);
+      y = drawRow(doc, y, rows.length, lengthValue(vehicle.length));
     }
   } else {
     // motor
-    y = drawRow(doc, y, 'VIN:', (vehicle.vin || '').toUpperCase(), { mono: true });
+    y = drawRow(doc, y, rows.vin, (vehicle.vin || '').toUpperCase(), { mono: true });
     const unit = vehicle.odometerUnit === 'km' ? 'km' : 'miles';
-    const status = ODO_STATUS[vehicle.odometerStatus] || '';
+    const status = COPY.vehicle.odometerStatus.options[vehicle.odometerStatus] || '';
     const odo = `${vehicle.odometer || ''} ${unit}${status ? ` (${status})` : ''}`;
-    y = drawRow(doc, y, 'Odometer:', odo);
+    y = drawRow(doc, y, rows.odometer, odo);
   }
   return y + SECTION_GAP;
 }
 
 function drawSale(doc, y, sale) {
+  const rows = COPY.pdf.rows;
   y = drawSectionHeading(doc, y, COPY.pdf.saleHeading);
   if (sale.priceNegotiable && sale.payment !== 'gift') {
-    y = drawRow(doc, y, 'Sale price:', '', { blank: true });
+    y = drawRow(doc, y, rows.salePrice, '', { blank: true });
   } else if (sale.payment === 'gift') {
-    y = drawRow(doc, y, 'Sale price:', 'Gift - no monetary consideration');
+    y = drawRow(doc, y, rows.salePrice, COPY.pdf.giftValue);
   } else {
-    y = drawRow(doc, y, 'Sale price:', formatPrice(sale));
+    y = drawRow(doc, y, rows.salePrice, formatPrice(sale));
   }
-  y = drawRow(doc, y, 'Date of sale:', formatDateLong(sale.date));
-  y = drawRow(doc, y, 'Payment:', paymentLabel(sale));
+  y = drawRow(doc, y, rows.dateOfSale, formatDateLong(sale.date));
+  y = drawRow(doc, y, rows.payment, paymentLabel(sale));
   return y + SECTION_GAP;
 }
 
@@ -337,13 +339,8 @@ function drawNotary(doc, y, usState) {
   // usState reserved for future per-state notary copy variants (e.g.
   // "Acknowledged before me on..." vs jurat). For v1 the body is generic.
   void usState;
-  const heading = COPY.pdf.notaryHeading || 'NOTARIZATION';
-  const rows = COPY.pdf.notaryRows || {
-    stateCounty: 'State & County:',
-    date: 'Date:',
-    notarySig: 'Notary signature:',
-    commission: 'Commission expires:',
-  };
+  const heading = COPY.pdf.notaryHeading;
+  const rows = COPY.pdf.notaryRows;
   y = drawSectionHeading(doc, y, heading);
   const opts = { blank: true, labelW: NOTARY_LABEL_W };
   y = drawRow(doc, y, rows.stateCounty, '', opts);
@@ -416,9 +413,15 @@ export function buildBillOfSalePdf(state) {
   let y = MARGIN;
 
   const usState = getState(state.meta?.usState);
+  // Mirror app.js applyStateChrome: build the subtitle from the shared COPY
+  // templates rather than re-deriving the "{honorific} of {name}" string.
+  // With NEUTRAL_STATE (honorific ''), this takes the no-honorific branch and
+  // renders the empty name -> blank, matching prior behavior.
   const subtitle = usState.honorific
-    ? `${usState.honorific} of ${usState.name}`
-    : usState.name;
+    ? COPY.app.subtitleTemplate
+        .replace('{honorific}', usState.honorific)
+        .replace('{name}', usState.name)
+    : COPY.app.subtitleNoHonorific.replace('{name}', usState.name);
   const includeNotary = state.sale?.includeNotary === true;
 
   // Title block
