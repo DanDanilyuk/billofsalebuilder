@@ -755,10 +755,16 @@ function restoreFocus(snap) {
 // notarization AND the user hasn't explicitly toggled the checkbox themselves.
 // 'recommended' / 'optional' leave the box unchecked (still visible, so the
 // user can opt in). Once notaryUserSet is true, this auto-default is a no-op
-// for the rest of the session.
+// for the rest of the session - EXCEPT for 'not_required' states, which hide
+// the toggle entirely: there the value is forced off regardless, because a
+// stale true would print a notary block with no UI left to remove it.
 function applyNotaryAutoDefault() {
-  if (state.sale.notaryUserSet) return;
   const stateData = STATES[state.meta?.usState];
+  if (stateData && stateData.notary === 'not_required') {
+    state.sale.includeNotary = false;
+    return;
+  }
+  if (state.sale.notaryUserSet) return;
   if (!stateData) return;
   state.sale.includeNotary = stateData.notary === 'required';
 }

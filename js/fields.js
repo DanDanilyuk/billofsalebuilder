@@ -203,8 +203,8 @@ function saleFields(state) {
   const stateData = STATES[state.meta?.usState];
   // Notary toggle hides for jurisdictions that don't use it. 'required' /
   // 'recommended' / 'optional' all surface the checkbox; 'not_required' hides
-  // it (and forces the value off so a stale auto-default doesn't sneak it
-  // into the PDF).
+  // it (app.js applyNotaryAutoDefault forces the value off in that case so a
+  // stale opt-in doesn't sneak into the PDF with no UI to remove it).
   const notaryNeeded = stateData ? stateData.notary !== 'not_required' : true;
 
   const fields = [
