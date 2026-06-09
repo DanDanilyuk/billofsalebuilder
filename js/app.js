@@ -285,6 +285,11 @@ function renderField(field) {
     if (field.kind === 'radio') {
       const group = document.createElement('div');
       group.className = 'radio-group';
+      // Group semantics: without role=radiogroup + a labelled group, SRs
+      // announce "Seller, radio 1 of 2" with no trace of the question text.
+      group.setAttribute('role', 'radiogroup');
+      labelEl.id = fieldUid(field.path) + '-label';
+      group.setAttribute('aria-labelledby', labelEl.id);
       Object.entries(field.options || {}).forEach(([k, v]) => {
         const lbl = document.createElement('label');
         lbl.className = 'radio' + (value === k ? ' is-selected' : '');
