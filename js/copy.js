@@ -44,6 +44,9 @@ export const COPY = {
     review: "Review",
     clear: "Clear form",
     download: "Download PDF",
+    // Opens the generated blob PDF in a new tab; the iframe preview is unreliable
+    // on some mobile browsers, so this is the dependable view path.
+    openPdf: "Open PDF in new tab",
     backToEdit: "Back to edit",
   },
   modals: {
@@ -262,6 +265,9 @@ export const COPY = {
     sub: "Verify the document below, then download.",
     // Shown in the Step 6 preview area when PDF generation throws.
     buildError: "We couldn't build the document preview. Go back, double-check your entries, then return to this step.",
+    // Always-on helper under the preview; the inline iframe is unreliable on
+    // some mobile browsers, so point users at the new-tab / download paths.
+    previewHint: "Not seeing the preview? Open the PDF in a new tab or download it to view your document.",
   },
   errors: {
     required: "Required.",

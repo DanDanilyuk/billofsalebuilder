@@ -304,6 +304,16 @@ body {
   background: var(--surface);
 }
 
+/* Always-on fallback hint under the Step 6 preview. The inline iframe can't be
+   trusted to render a blob PDF on every browser, so this quietly points at the
+   open-in-new-tab / download paths. */
+.pdf-hint {
+  margin: var(--space-3) 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 /* Step 6 PDF build failure banner (created dynamically by app.js). Mirrors the
    field-error palette (--error) in a padded, bordered card so a failed preview
    is explained rather than just blank. */

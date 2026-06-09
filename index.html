@@ -211,12 +211,18 @@
       <h2 class="step__title" data-step-title></h2>
       <p class="step__sub" data-step-sub></p>
       <iframe class="pdf-preview" title="Bill of Sale preview"></iframe>
+      <!-- Always-on fallback line. Some mobile browsers (iOS Safari) won't render
+           a blob PDF inside an iframe; text set from COPY by app.js renderPreview(). -->
+      <p class="pdf-hint" data-pdf-hint hidden></p>
     </section>
 
     <div class="actions">
       <button type="button" class="btn btn--ghost" data-action="back">Back</button>
       <button type="button" class="btn btn--secondary" data-action="clear" hidden>Clear form</button>
       <button type="button" class="btn btn--primary" data-action="continue">Continue</button>
+      <!-- Mobile-safe escape hatch when the inline preview won't render; href +
+           label set by app.js. -->
+      <a class="btn btn--secondary" data-action="open-pdf" target="_blank" rel="noopener" hidden></a>
       <a class="btn btn--primary" data-action="download" hidden>Download PDF</a>
     </div>
   </main>

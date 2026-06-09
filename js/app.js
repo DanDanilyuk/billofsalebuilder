@@ -970,6 +970,7 @@ function updateActions(n) {
   const cont = document.querySelector('[data-action="continue"]');
   const clear = document.querySelector('[data-action="clear"]');
   const dl = document.querySelector('[data-action="download"]');
+  const openPdf = document.querySelector('[data-action="open-pdf"]');
 
   back.hidden = n === 1;
   back.textContent = n === TOTAL_STEPS ? COPY.actions.backToEdit : COPY.actions.back;
@@ -980,12 +981,17 @@ function updateActions(n) {
   if (n === TOTAL_STEPS) {
     cont.hidden = true;
     // renderPreview() runs just before this in renderStep(); when the build
-    // failed there's nothing to download, so keep the button hidden.
+    // failed there's nothing to download or open, so keep both hidden.
     dl.hidden = previewBuildFailed;
     dl.textContent = COPY.actions.download;
+    if (openPdf) {
+      openPdf.hidden = previewBuildFailed;
+      openPdf.textContent = COPY.actions.openPdf;
+    }
   } else {
     cont.hidden = false;
     dl.hidden = true;
+    if (openPdf) openPdf.hidden = true;
     cont.textContent = n === TOTAL_STEPS - 1 ? COPY.actions.review : COPY.actions.continue;
   }
 }
@@ -1020,6 +1026,8 @@ function getPreviewErrorEl() {
 function renderPreview() {
   const iframe = document.querySelector('.pdf-preview');
   const errEl = getPreviewErrorEl();
+  const hintEl = document.querySelector('[data-pdf-hint]');
+  const openEl = document.querySelector('[data-action="open-pdf"]');
   try {
     const blob = buildBillOfSalePdf(state);
     if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
@@ -1036,6 +1044,15 @@ function renderPreview() {
       dl.download = downloadFilename();
     }
 
+    // Mobile-safe escape hatches: the inline iframe is unreliable on some
+    // browsers (iOS Safari), so always offer open-in-new-tab + an explanatory
+    // hint. Button visibility is restored by updateActions() via the flag.
+    if (openEl) openEl.href = lastBlobUrl;
+    if (hintEl) {
+      hintEl.textContent = COPY.review.previewHint;
+      hintEl.hidden = false;
+    }
+
     // Success: clear any prior error so a retry after fixing data shows the
     // preview rather than a stale message. updateActions() reads the flag to
     // restore the download button.
@@ -1047,13 +1064,16 @@ function renderPreview() {
   } catch (err) {
     console.error('PDF preview build failed:', err);
     // Surface a visible, accessible message and hide the blank iframe. The
-    // download button is hidden by updateActions() via previewBuildFailed.
+    // download + open-pdf buttons are hidden by updateActions() via the flag.
     previewBuildFailed = true;
     if (iframe) iframe.hidden = true;
     if (errEl) {
       errEl.textContent = COPY.review.buildError;
       errEl.hidden = false;
     }
+    // No document to open or describe - drop the new-tab href and hide the hint.
+    if (openEl) openEl.removeAttribute('href');
+    if (hintEl) hintEl.hidden = true;
   }
 }
 
