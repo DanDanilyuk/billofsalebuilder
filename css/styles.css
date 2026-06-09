@@ -80,11 +80,18 @@ body {
 .brand { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; margin: 0; }
 .brand-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-.theme-toggle {
+/* Header action group: icon controls pinned to the top-right of the header. */
+.header-actions {
   position: absolute;
   top: 50%;
   right: var(--space-4);
   transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+/* Shared icon button / link (info, home, theme toggle). */
+.icon-btn {
   width: 36px;
   height: 36px;
   display: inline-flex;
@@ -96,11 +103,14 @@ body {
   border-radius: var(--radius-sm);
   color: var(--muted);
   cursor: pointer;
+  text-decoration: none;
   transition: color 0.15s, border-color 0.15s;
 }
-.theme-toggle:hover { color: var(--ink); border-color: var(--subtle); }
-.theme-toggle:focus-visible { outline: none; border-color: var(--ink); }
-.theme-toggle svg { width: 18px; height: 18px; display: block; }
+.icon-btn:hover { color: var(--ink); border-color: var(--subtle); }
+.icon-btn:focus-visible { outline: none; border-color: var(--ink); }
+.icon-btn svg { width: 18px; height: 18px; display: block; }
+
+/* Theme toggle shares .icon-btn; only the sun/moon swap is specific to it. */
 .theme-toggle .icon-sun { display: none; }
 [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
 [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
@@ -388,6 +398,9 @@ body {
   border-top: 1px solid var(--subtle);
   padding: var(--space-12) var(--space-4);
 }
+/* Info page variant: the .seo block is the whole page body, so drop the top
+   rule (the header already separates it) and grow to push the footer down. */
+.seo--page { border-top: 0; flex: 1; }
 .seo__inner {
   width: 100%;
   max-width: var(--max-width);

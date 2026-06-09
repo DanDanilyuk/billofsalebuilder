@@ -43,82 +43,6 @@
   }
   </script>
 
-  <!-- FAQPage structured data. Mirrors the visible FAQ in the .seo section
-       below so search engines can surface the same Q&A as rich results. Keep
-       the answer text here in sync with the on-page answers. -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "What is a vehicle bill of sale?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "A vehicle bill of sale is a written record of a sale between a seller and a buyer. It lists the vehicle, the price, the date, and both parties, and serves as proof that the transaction took place. Many states ask for one as part of registering or titling the vehicle."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Do I need a bill of sale to sell a car?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "It depends on where the title is transferred. Some states require a bill of sale for registration or tax purposes, while others treat it as optional but useful proof of the sale. Check your state's DMV to confirm what it asks for."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does a bill of sale need to be notarized?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Most states do not require notarization, but a handful do, and others recommend it. This tool adds a notary block automatically when your selected state requires one, and lets you add it by choice otherwise. Check your state's DMV if you are unsure."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What information goes on a bill of sale?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "A bill of sale typically includes the seller and buyer names and addresses, the vehicle details (year, make, model, VIN or HIN), the sale price and date, and the signatures of both parties. Vehicles that are 20 model years old or newer also need an odometer reading. This builder collects each of these as you move through the steps."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Is this bill of sale valid in my state?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "The document is tailored to the state you select, using that state's title-transfer language and form references where they exist. Requirements still change over time and can vary by county, so confirm the details with your state's DMV before submitting."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does a bill of sale transfer ownership, or do I still need the title?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "A bill of sale records the sale, but in most states it does not transfer ownership on its own. The signed title is what officially transfers ownership, and the bill of sale supports it. Follow your state's DMV process to complete the title transfer."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How do I sell a car as-is?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Selling a vehicle as-is means the buyer accepts it in its current condition with no warranties from the seller. The document this tool generates states that the vehicle is sold as-is, with no warranties expressed or implied. Make sure both parties understand the condition of the vehicle before signing."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Is my data private? Does anything get uploaded?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Your document is built entirely in your browser, and nothing you enter is sent to us or stored on a server. Two optional lookups reach outside the page: the VIN field can query the federal NHTSA database to fill in year, make, and model, and the ZIP field can query a public postal-code service to fill in city and state. Nothing else leaves your browser."
-        }
-      }
-    ]
-  }
-  </script>
-
   <link rel="stylesheet" href="css/styles.css">
 
   <script>
@@ -146,15 +70,25 @@
   <header class="page-header">
     <h1 class="brand">Bill of Sale Builder</h1>
     <div class="brand-sub" data-state-subtitle></div>
-    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch theme">
-      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="4"/>
-        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-      </svg>
-    </button>
+    <div class="header-actions">
+      <!-- Info icon: opens the separate How-it-works / FAQ page (a crawlable link). -->
+      <a class="icon-btn" href="info.html" aria-label="How it works and FAQ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <line x1="12" y1="11" x2="12" y2="16"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </a>
+      <button type="button" class="theme-toggle icon-btn" data-theme-toggle aria-label="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+      </button>
+    </div>
   </header>
 
   <main class="wizard">
@@ -228,65 +162,6 @@
       <a class="btn btn--primary" data-action="download" hidden>Download PDF</a>
     </div>
   </main>
-
-  <!-- Crawlable SEO content. Plain static HTML (not injected by app.js) so it
-       is indexable: a how-it-works explainer plus an accordion FAQ built from
-       native <details>/<summary> (keyboard-accessible, no JS). The answers are
-       mirrored in the FAQPage JSON-LD in <head>. -->
-  <section class="seo">
-    <div class="seo__inner">
-
-      <div class="seo__block">
-        <h2 class="seo__heading">How it works</h2>
-        <ol class="seo__steps">
-          <li><strong>Pick your state and role.</strong> Choose the state where the title will be transferred and whether you are the seller or the buyer.</li>
-          <li><strong>Fill in the details.</strong> Enter the vehicle, both parties, and the sale terms. We fill in what we can from the VIN and ZIP.</li>
-          <li><strong>Download the PDF.</strong> Review the document, then download or print it to sign.</li>
-        </ol>
-      </div>
-
-      <div class="seo__block">
-        <h2 class="seo__heading">Frequently asked questions</h2>
-        <p class="seo__intro">Common questions about vehicle bills of sale. This tool builds a printable document, it is not legal advice, so confirm the title transfer requirements with your state's DMV before you rely on it.</p>
-
-        <div class="seo__faq">
-          <details class="seo__item">
-            <summary class="seo__q">What is a vehicle bill of sale?</summary>
-            <div class="seo__a"><p>A vehicle bill of sale is a written record of a sale between a seller and a buyer. It lists the vehicle, the price, the date, and both parties, and serves as proof that the transaction took place. Many states ask for one as part of registering or titling the vehicle.</p></div>
-          </details>
-          <details class="seo__item">
-            <summary class="seo__q">Do I need a bill of sale to sell a car?</summary>
-            <div class="seo__a"><p>It depends on where the title is transferred. Some states require a bill of sale for registration or tax purposes, while others treat it as optional but useful proof of the sale. Check your state's DMV to confirm what it asks for.</p></div>
-          </details>
-          <details class="seo__item">
-            <summary class="seo__q">Does a bill of sale need to be notarized?</summary>
-            <div class="seo__a"><p>Most states do not require notarization, but a handful do, and others recommend it. This tool adds a notary block automatically when your selected state requires one, and lets you add it by choice otherwise. Check your state's DMV if you are unsure.</p></div>
-          </details>
-          <details class="seo__item">
-            <summary class="seo__q">What information goes on a bill of sale?</summary>
-            <div class="seo__a"><p>A bill of sale typically includes the seller and buyer names and addresses, the vehicle details (year, make, model, VIN or HIN), the sale price and date, and the signatures of both parties. Vehicles that are 20 model years old or newer also need an odometer reading. This builder collects each of these as you move through the steps.</p></div>
-          </details>
-          <details class="seo__item">
-            <summary class="seo__q">Is this bill of sale valid in my state?</summary>
-            <div class="seo__a"><p>The document is tailored to the state you select, using that state's title-transfer language and form references where they exist. Requirements still change over time and can vary by county, so confirm the details with your state's DMV before submitting.</p></div>
-          </details>
-          <details class="seo__item">
-            <summary class="seo__q">Does a bill of sale transfer ownership, or do I still need the title?</summary>
-            <div class="seo__a"><p>A bill of sale records the sale, but in most states it does not transfer ownership on its own. The signed title is what officially transfers ownership, and the bill of sale supports it. Follow your state's DMV process to complete the title transfer.</p></div>
-          </details>
-          <details class="seo__item">
-            <summary class="seo__q">How do I sell a car as-is?</summary>
-            <div class="seo__a"><p>Selling a vehicle as-is means the buyer accepts it in its current condition with no warranties from the seller. The document this tool generates states that the vehicle is sold as-is, with no warranties expressed or implied. Make sure both parties understand the condition of the vehicle before signing.</p></div>
-          </details>
-          <details class="seo__item">
-            <summary class="seo__q">Is my data private? Does anything get uploaded?</summary>
-            <div class="seo__a"><p>Your document is built entirely in your browser, and nothing you enter is sent to us or stored on a server. Two optional lookups reach outside the page: the VIN field can query the federal NHTSA database to fill in year, make, and model, and the ZIP field can query a public postal-code service to fill in city and state. Nothing else leaves your browser.</p></div>
-          </details>
-        </div>
-      </div>
-
-    </div>
-  </section>
 
   <footer class="page-footer">
     <p class="page-footer__disclaimer" data-page-disclaimer></p>
