@@ -57,10 +57,12 @@ export const validators = {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return 'date';
     const d = new Date(v + 'T12:00:00');
     if (Number.isNaN(d.getTime())) return 'date';
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(23, 59, 59, 999);
-    return d > tomorrow ? 'dateFuture' : null;
+    // Cutoff is the end of TODAY (local): "Sale date can't be in the future"
+    // means tomorrow fails. The input parses at noon local, so any date up to
+    // and including today lands below this.
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    return d > endOfToday ? 'dateFuture' : null;
   },
 
   // Phone is optional; empty passes. If present, must be 10 digits after
