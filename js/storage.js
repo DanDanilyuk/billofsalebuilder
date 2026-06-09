@@ -90,7 +90,15 @@ export function defaultState() {
 export function loadState(fallback) {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Valid JSON isn't necessarily a draft: 'null', '[]', '5' all parse but
+      // would crash init() before any UI (including Clear form) exists. Only
+      // accept a plain object; anything else falls back to defaults.
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
     return structuredClone(fallback);
   } catch {
     return structuredClone(fallback);
