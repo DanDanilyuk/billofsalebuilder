@@ -49,10 +49,14 @@ billofsalebuilder/
 │   └── zip-decoder.js       # ZIP -> city/state via api.zippopotam.us
 ├── lib/jspdf.umd.min.js     # vendored, no CDN at runtime
 ├── assets/fonts/            # Inter woff2 (self-hosted)
-├── og.svg                   # social share card (1200x630)
-├── favicon.svg              # 32x32 document icon
+├── og.png                   # rasterized social share card (1200x630)
+├── og.svg                   # share-card source
+├── favicon.svg              # document icon (SVG)
+├── favicon-32.png           # 32x32 PNG favicon fallback
+├── apple-touch-icon.png     # 180x180 iOS home-screen icon
 ├── robots.txt               # allow all + sitemap reference
-└── sitemap.xml              # single URL entry
+├── sitemap.xml              # single URL entry
+└── .assetsignore            # dev-only paths kept out of the Workers deploy
 ```
 
 ## Wizard steps
