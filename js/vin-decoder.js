@@ -73,7 +73,14 @@ const VEHICLE_TYPE_MAP = {
 
 function titleCase(s) {
   if (!s) return '';
-  return String(s).toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
+  // Keep short all-caps tokens as-is: NHTSA reports acronym makes in caps
+  // (BMW, GMC, RAM) and "Bmw" on a legal document reads wrong.
+  return String(s)
+    .split(' ')
+    .map((w) => /^[A-Z0-9]{2,3}$/.test(w)
+      ? w
+      : w.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase()))
+    .join(' ');
 }
 
 function mapBodyClass(bodyClass, vehicleType) {
