@@ -67,6 +67,15 @@ let currentStep = 1;
 let lastBlobUrl = null;
 let vinDecodeToken = 0;     // increments per request; stale responses dropped
 let vinDecodeTimer = null;  // debounce timer
+let uidCounter = 0;         // monotonic; keeps rendered field ids unique across re-renders
+
+// Builds a DOM id unique to this render pass so label[for] can point at its
+// control. renderForm re-runs often, so we mix the (sanitized) field path with
+// a monotonic counter to stay unique even when the same path is re-rendered.
+function fieldUid(path) {
+  const safe = String(path || 'field').replace(/[^a-zA-Z0-9]+/g, '-');
+  return `field-${safe}-${++uidCounter}`;
+}
 
 // ---- init ----------------------------------------------------------------
 
@@ -267,6 +276,10 @@ function renderField(field) {
       const sel = document.createElement('select');
       sel.className = 'select';
       sel.dataset.path = field.path;
+      // Associate the label with this control so clicking it focuses the select.
+      const id = fieldUid(field.path);
+      sel.id = id;
+      labelEl.htmlFor = id;
       // Hidden placeholder for the empty state.
       const placeholder = document.createElement('option');
       placeholder.value = '';
@@ -283,12 +296,20 @@ function renderField(field) {
       });
       wrap.appendChild(sel);
     } else if (field.kind === 'searchSelect') {
-      wrap.appendChild(buildSearchSelect(field, value));
+      // Point the label at the VISIBLE text input (not the hidden anchor), so
+      // clicking the label focuses the field the user actually types into.
+      const id = fieldUid(field.path);
+      labelEl.htmlFor = id;
+      wrap.appendChild(buildSearchSelect(field, value, id));
     } else {
       // text, number, date
       const input = document.createElement('input');
       input.className = 'input' + (field.mono ? ' input--mono' : '');
       input.dataset.path = field.path;
+      // Associate the label with this control so clicking it focuses the input.
+      const id = fieldUid(field.path);
+      input.id = id;
+      labelEl.htmlFor = id;
       input.value = value ?? '';
       if (field.kind === 'date') {
         input.type = 'date';
@@ -333,13 +354,15 @@ function renderField(field) {
 //
 // Currently only used for the meta.usState picker (optionsKey='states').
 
-function buildSearchSelect(field, currentValue) {
+function buildSearchSelect(field, currentValue, controlId) {
   const optionsData = optionsForKey(field.optionsKey);
   const container = document.createElement('div');
   container.className = 'searchselect';
 
   const input = document.createElement('input');
   input.className = 'input searchselect__input';
+  // The label[for] from renderField targets this visible input.
+  if (controlId) input.id = controlId;
   input.type = 'text';
   input.autocomplete = 'off';
   input.spellcheck = false;
