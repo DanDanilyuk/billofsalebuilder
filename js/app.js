@@ -315,7 +315,12 @@ function renderField(field) {
         input.type = 'date';
       } else if (field.kind === 'number') {
         input.type = 'number';
-        input.inputMode = 'decimal';
+        // Optional per-field hints drive inputMode + native min/step without
+        // hardcoding field paths here (e.g. year uses 'numeric', odometer
+        // clamps step to whole numbers). Defaults preserve prior behavior.
+        input.inputMode = field.inputMode || 'decimal';
+        if (field.min != null) input.min = String(field.min);
+        if (field.step != null) input.step = String(field.step);
       } else {
         input.type = 'text';
       }

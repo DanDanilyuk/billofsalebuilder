@@ -249,6 +249,8 @@ export const COPY = {
     year: "Enter a year between 1900 and next year.",
     zip: "Use the format 12345 or 12345-6789.",
     price: "Enter a positive amount.",
+    odometer: "Enter the odometer reading as a whole number, zero or more.",
+    length: "Enter the length in feet as a number, zero or more.",
     date: "Enter a valid date.",
     dateFuture: "Sale date can't be in the future.",
     phone: "Enter a 10-digit phone number.",

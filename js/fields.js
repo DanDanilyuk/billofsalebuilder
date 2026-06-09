@@ -142,7 +142,10 @@ function vehicleFields(state) {
     });
   }
 
-  fields.push({ path: 'vehicle.year', label: c.year.label, req: true, kind: 'number', validate: ['year'] });
+  fields.push({
+    path: 'vehicle.year', label: c.year.label, req: true, kind: 'number',
+    validate: ['year'], inputMode: 'numeric', min: 1900, step: 1,
+  });
   fields.push({ path: 'vehicle.make', label: c.make.label, req: true, kind: 'text' });
   fields.push({ path: 'vehicle.model', label: c.model.label, req: true, kind: 'text' });
   fields.push({ path: 'vehicle.color', label: c.color.label, req: true, kind: 'text' });
@@ -151,6 +154,7 @@ function vehicleFields(state) {
   if (t === 'trailer' || t === 'boat') {
     fields.push({
       path: 'vehicle.length', label: c.length.label, req: true, kind: 'number',
+      validate: ['length'], min: 0, step: 'any',
     });
   }
 
@@ -178,7 +182,7 @@ function vehicleFields(state) {
   if (t === 'motor') {
     fields.push({
       path: 'vehicle.odometer', label: c.odometer.label,
-      req: true, kind: 'number',
+      req: true, kind: 'number', validate: ['odometer'], min: 0, step: 1,
     });
     fields.push({
       path: 'vehicle.odometerUnit', label: c.odometerUnit.label,
@@ -212,7 +216,7 @@ function saleFields(state) {
     },
     {
       path: 'sale.price', label: c.price.label, hint: c.price.hint,
-      req: true, kind: 'number', validate: ['price'],
+      req: true, kind: 'number', validate: ['price'], min: 0, step: '0.01',
       showWhen: (s) => s.sale.payment !== 'gift' && !s.sale.priceNegotiable,
     },
     { path: 'sale.date', label: c.date.label, req: true, kind: 'date', validate: ['date'] },

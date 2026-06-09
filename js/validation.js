@@ -38,6 +38,21 @@ export const validators = {
     return (Number.isFinite(n) && n >= 0 && n < 1e8) ? null : 'price';
   },
 
+  // Odometer: whole miles/km, zero or more. Rejects negatives, non-numbers,
+  // and fractional readings.
+  odometer: (v) => {
+    const n = Number(v);
+    return (Number.isFinite(n) && Number.isInteger(n) && n >= 0 && n < 1e9)
+      ? null
+      : 'odometer';
+  },
+
+  // Length in feet, zero or more. Decimals allowed (e.g. 24.5).
+  length: (v) => {
+    const n = Number(v);
+    return (Number.isFinite(n) && n >= 0 && n < 1e7) ? null : 'length';
+  },
+
   date: (v) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return 'date';
     const d = new Date(v + 'T12:00:00');
