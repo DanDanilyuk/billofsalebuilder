@@ -364,8 +364,11 @@ function renderField(field) {
         // input (multi-hundred-char "addresses") only bloats the document.
         input.maxLength = 120;
       }
-      // Sensible autocomplete hints.
-      if (/\.zip$/.test(field.path)) input.autocomplete = 'postal-code';
+      // Sensible autocomplete hints. ZIP and phone also get inputmode so
+      // mobile keyboards open on the numeric/tel pad instead of the full
+      // alphabet (kept as type=text so the form's event binding and free-form
+      // values like ZIP+4 still work).
+      if (/\.zip$/.test(field.path)) { input.autocomplete = 'postal-code'; input.inputMode = 'numeric'; }
       else if (/\.city$/.test(field.path)) input.autocomplete = 'address-level2';
       else if (/\.state$/.test(field.path)) input.autocomplete = 'address-level1';
       else if (/\.street$/.test(field.path)) input.autocomplete = 'address-line1';
@@ -373,7 +376,7 @@ function renderField(field) {
       else if (/\.firstName$/.test(field.path)) input.autocomplete = 'given-name';
       else if (/\.middleName$/.test(field.path)) input.autocomplete = 'additional-name';
       else if (/\.lastName$/.test(field.path)) input.autocomplete = 'family-name';
-      else if (/\.phone$/.test(field.path)) input.autocomplete = 'tel';
+      else if (/\.phone$/.test(field.path)) { input.autocomplete = 'tel'; input.inputMode = 'tel'; }
       wrap.appendChild(input);
     }
   }
