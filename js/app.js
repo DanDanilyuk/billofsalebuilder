@@ -631,6 +631,13 @@ function onFieldChange(e) {
   if (path === 'meta.usState') {
     applyNotaryAutoDefault();
   }
+  // Role swap: the party that just became "you" must not stay skip-filled.
+  // Step 2 omits the skip checkbox entirely, so a stale skipFill=true would
+  // render the step with zero fields (and print the user's own PDF section
+  // as blank lines) with no UI to undo it.
+  if (path === 'meta.role') {
+    state[youPrefix(state)].skipFill = false;
+  }
 
   saveState(state);
   clearFieldError(e.target);
