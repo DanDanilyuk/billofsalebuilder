@@ -66,6 +66,7 @@ let state = loadState(defaultState());
 let currentStep = 1;
 let lastBlobUrl = null;
 let previewBuildFailed = false; // last renderPreview() threw; hides download/iframe
+let previewReady = false;       // a preview build SUCCEEDED; gates download/open/print
 let vinDecodeToken = 0;     // increments per request; stale responses dropped
 let vinDecodeTimer = null;  // debounce timer
 let uidCounter = 0;         // monotonic; keeps rendered field ids unique across re-renders
@@ -1006,16 +1007,20 @@ function updateActions(n) {
 
   if (n === TOTAL_STEPS) {
     cont.hidden = true;
-    // renderPreview() runs just before this in renderStep(); when the build
-    // failed there's nothing to download, open, or print, so keep them hidden.
-    dl.hidden = previewBuildFailed;
+    // Gate the PDF actions on a SUCCEEDED build: renderPreview() is async (lazy
+    // jsPDF), so this sync call can run before the blob exists. previewReady is
+    // reset to false at the start of renderPreview() and set true only on
+    // success, so the buttons stay hidden until there's a real PDF to act on.
+    // "Back to edit" stays visible regardless so the user can always leave.
+    const ready = previewReady && !previewBuildFailed;
+    dl.hidden = !ready;
     dl.textContent = COPY.actions.download;
     if (openPdf) {
-      openPdf.hidden = previewBuildFailed;
+      openPdf.hidden = !ready;
       openPdf.textContent = COPY.actions.openPdf;
     }
     if (printBtn) {
-      printBtn.hidden = previewBuildFailed;
+      printBtn.hidden = !ready;
       printBtn.textContent = COPY.actions.print;
     }
   } else {
@@ -1089,6 +1094,10 @@ async function renderPreview() {
   const errEl = getPreviewErrorEl();
   const hintEl = document.querySelector('[data-pdf-hint]');
   const openEl = document.querySelector('[data-action="open-pdf"]');
+  // Synchronous reset: runs before renderStep()'s updateActions(6), so the
+  // download/open/print buttons start hidden and only reveal once the async
+  // build below succeeds (no transient stale/missing-href window).
+  previewReady = false;
   try {
     // Lazy-load jsPDF on first preview. A load failure rejects here and falls
     // into the same catch as a build error, so the user sees the error banner.
@@ -1121,6 +1130,7 @@ async function renderPreview() {
     // preview rather than a stale message. updateActions() reads the flag to
     // restore the download button.
     previewBuildFailed = false;
+    previewReady = true;
     if (errEl) {
       errEl.hidden = true;
       errEl.textContent = '';
