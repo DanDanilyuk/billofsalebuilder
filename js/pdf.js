@@ -514,7 +514,7 @@ export function buildBillOfSalePdf(state) {
 
   // Reserve room for the optional notary block + signature block + optional
   // witness block + footer; if it won't fit, push to a new page and re-anchor.
-  const SIG_BLOCK_HEIGHT = 14    // heading row
+  const SIG_BLOCK_HEIGHT = HEADING_GAP // heading row (drawSectionHeading advance)
                          + 30    // top space for first line
                          + 11    // first label
                          + 24    // gap
@@ -527,7 +527,7 @@ export function buildBillOfSalePdf(state) {
   // Witness block mirrors the signature block (heading + two rows), so it
   // reserves the same height when present.
   const WITNESS_BLOCK_HEIGHT = includeWitness
-    ? (14    // heading row
+    ? (HEADING_GAP // heading row (drawSectionHeading advance)
        + 30    // top space for witness 1 row
        + 11    // witness 1 labels
        + 24    // gap
