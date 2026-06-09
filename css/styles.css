@@ -24,7 +24,7 @@
   --bg-elevated: #f5f5f4;
   --ink: #0a0a0a;
   --ink-hover: #1a1a1a;
-  --muted: #737373;
+  --muted: #6b6b6b; /* >= 4.5:1 AA even on --bg-elevated (#f5f5f4: ~4.9:1) */
   --subtle: #e5e5e5;
   --error: #b91c1c;
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' width='12' height='8'%3E%3Cpath fill='none' stroke='%230a0a0a' stroke-width='1.5' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
@@ -247,6 +247,12 @@ body {
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+/* On the --subtle highlight background, --muted falls under 4.5:1 in both
+   themes; promote the abbreviation to full ink while the row is active. */
+.searchselect__option[aria-selected="true"] .abbr,
+.searchselect__option:hover .abbr {
+  color: var(--ink);
 }
 
 .modal {

@@ -27,8 +27,9 @@ const CONTENT_W = PAGE_W - MARGIN * 2;
 // PAGE_H - FOOTER_RESERVE so nothing runs under the footer.
 const FOOTER_RESERVE = 60;
 
-// Color tokens (RGB). Matches site palette: ink #0a0a0a, muted #737373,
-// subtle #e5e5e5.
+// Color tokens (RGB). Tracks the site palette: ink #0a0a0a, subtle #e5e5e5;
+// muted stays #737373 here (print contrast on white is fine) even though the
+// screen token darkened to #6b6b6b for AA on elevated surfaces.
 const INK = [10, 10, 10];
 const MUTED = [115, 115, 115];
 const RULE = [229, 229, 229];
