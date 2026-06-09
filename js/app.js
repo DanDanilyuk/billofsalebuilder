@@ -662,9 +662,11 @@ function onFieldChange(e) {
   }
 
   if (RERENDER_PATHS.has(path)) {
+    const focusSnap = captureFocus();
     applyDynamicChrome(currentStep);
     applyStateChrome();
     renderForm(currentStep);
+    restoreFocus(focusSnap);
     return;
   }
 
@@ -681,6 +683,58 @@ function onFieldChange(e) {
   } else if (e.target.type === 'checkbox') {
     const lbl = e.target.closest('.checkbox');
     if (lbl) lbl.classList.toggle('is-selected', e.target.checked);
+  }
+}
+
+// ---- focus preservation across re-renders ---------------------------------
+//
+// renderForm wipes the step's DOM, so any RERENDER_PATHS change would dump
+// keyboard focus to <body> (worst for radios, which fire change on every
+// arrow-key press). Snapshot the focused control before the re-render and
+// restore it - including text selection and, for radios, the specific option.
+
+function captureFocus() {
+  const el = document.activeElement;
+  if (!el) return null;
+  let path = el.dataset ? el.dataset.path : null;
+  // searchSelect: focus lives on the visible input; the [data-path] sits on
+  // the hidden anchor next to it.
+  const isSearchSelect = !path && !!el.closest?.('.searchselect');
+  if (isSearchSelect) {
+    path = el.closest('.searchselect').querySelector('.searchselect__anchor')?.dataset.path;
+  }
+  if (!path) return null;
+  const snap = { path, isSearchSelect };
+  if (el.type === 'radio') snap.radioValue = el.value;
+  if (typeof el.selectionStart === 'number') {
+    snap.selStart = el.selectionStart;
+    snap.selEnd = el.selectionEnd;
+  }
+  return snap;
+}
+
+function restoreFocus(snap) {
+  if (!snap) return;
+  let el = snap.radioValue != null
+    ? document.querySelector(`[data-path="${snap.path}"][value="${snap.radioValue}"]`)
+    : document.querySelector(`[data-path="${snap.path}"]`);
+  if (!el) return; // the focused field no longer exists in the new field set
+  if (el.type === 'hidden') {
+    el = el.closest('.searchselect')?.querySelector('.searchselect__input');
+    if (!el) return;
+  }
+  el.focus({ preventScroll: true });
+  // Refocusing a searchSelect input fires its focus listener, which opens the
+  // popover - unwanted right after a commit. Close it again (mirrors the
+  // outside-click close in bindGlobalSearchSelectClose).
+  if (snap.isSearchSelect) {
+    const list = el.closest('.searchselect')?.querySelector('.searchselect__list');
+    if (list) list.hidden = true;
+    el.setAttribute('aria-expanded', 'false');
+    el.removeAttribute('aria-activedescendant');
+  }
+  if (snap.selStart != null && typeof el.setSelectionRange === 'function') {
+    try { el.setSelectionRange(snap.selStart, snap.selEnd); } catch { /* non-text input */ }
   }
 }
 
