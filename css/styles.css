@@ -324,8 +324,122 @@ body {
   border-bottom-color: var(--ink);
 }
 
+/* ---- SEO content (how-it-works + FAQ) ----------------------------------
+   Static crawlable text below the wizard. A full-bleed top rule (like the
+   header / footer) separates it from the tool, while the inner column shares
+   the wizard's max-width so the page reads as one continuous surface. All
+   color comes from tokens, so light / dark are handled for free. */
+.seo {
+  border-top: 1px solid var(--subtle);
+  padding: var(--space-12) var(--space-4);
+}
+.seo__inner {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+.seo__block + .seo__block { margin-top: var(--space-12); }
+.seo__heading {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-4);
+}
+.seo__intro {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0 0 var(--space-6);
+}
+
+/* How-it-works: an ordered list with numbered tokens instead of raw markers,
+   so the steps still carry list/order semantics for assistive tech. */
+.seo__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: seo-step;
+}
+.seo__steps li {
+  position: relative;
+  padding-left: var(--space-8);
+  margin-bottom: var(--space-4);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.seo__steps li:last-child { margin-bottom: 0; }
+.seo__steps li::before {
+  counter-increment: seo-step;
+  content: counter(seo-step);
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--bg-elevated);
+  border: 1px solid var(--subtle);
+  border-radius: 50%;
+}
+.seo__steps strong { color: var(--ink); font-weight: 600; }
+
+/* FAQ: native <details>/<summary> accordion. Rows are separated by hairline
+   rules; the default disclosure triangle is replaced with a rotating chevron. */
+.seo__faq { border-top: 1px solid var(--subtle); }
+.seo__item { border-bottom: 1px solid var(--subtle); }
+.seo__q {
+  display: block;          /* drops the default list-item marker */
+  list-style: none;
+  cursor: pointer;
+  position: relative;
+  padding: var(--space-4) var(--space-6) var(--space-4) 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: color 0.15s;
+}
+.seo__q::-webkit-details-marker { display: none; }
+.seo__q::after {
+  content: '';
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -6px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease, border-color 0.15s;
+}
+.seo__item[open] .seo__q::after {
+  margin-top: -2px;
+  transform: rotate(-135deg);
+}
+.seo__q:hover { color: var(--ink-hover); }
+.seo__q:hover::after { border-color: var(--ink); }
+.seo__q:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.seo__a {
+  padding: 0 var(--space-6) var(--space-4) 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.seo__a p { margin: 0; }
+
 @media (max-width: 480px) {
   .wizard { padding: var(--space-6) var(--space-3) var(--space-12); }
   .actions { flex-direction: column; margin: 0 calc(-1 * var(--space-3)); }
   .btn--primary { flex: 1; }
+  .seo { padding: var(--space-8) var(--space-3); }
 }
