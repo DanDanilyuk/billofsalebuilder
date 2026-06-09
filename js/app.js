@@ -919,7 +919,12 @@ function validateStep(n) {
     }
   });
   if (firstInvalid) {
-    const el = document.querySelector(`[data-path="${firstInvalid}"]`);
+    let el = document.querySelector(`[data-path="${firstInvalid}"]`);
+    // searchSelect: [data-path] is the hidden (unfocusable) anchor - focus the
+    // visible input instead, mirroring showFieldError's ARIA target.
+    if (el && el.type === 'hidden') {
+      el = el.closest('.field')?.querySelector('.searchselect__input') || el;
+    }
     if (el && typeof el.focus === 'function') {
       el.focus({ preventScroll: false });
     }
