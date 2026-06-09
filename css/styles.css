@@ -304,6 +304,18 @@ body {
   background: var(--surface);
 }
 
+/* Step 6 PDF build failure banner (created dynamically by app.js). Mirrors the
+   field-error palette (--error) in a padded, bordered card so a failed preview
+   is explained rather than just blank. */
+.preview-error {
+  padding: var(--space-4);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  color: var(--error);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* ---- state guidance card (Step 1) --------------------------------------
    Quiet info panel below the Step 1 form, populated once a state is picked.
    Sits inside the wizard column; elevated surface + hairline border keeps it

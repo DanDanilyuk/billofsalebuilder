@@ -65,6 +65,7 @@ const VIN_DECODED_REVERT_MS = 3000;
 let state = loadState(defaultState());
 let currentStep = 1;
 let lastBlobUrl = null;
+let previewBuildFailed = false; // last renderPreview() threw; hides download/iframe
 let vinDecodeToken = 0;     // increments per request; stale responses dropped
 let vinDecodeTimer = null;  // debounce timer
 let uidCounter = 0;         // monotonic; keeps rendered field ids unique across re-renders
@@ -978,7 +979,9 @@ function updateActions(n) {
 
   if (n === TOTAL_STEPS) {
     cont.hidden = true;
-    dl.hidden = false;
+    // renderPreview() runs just before this in renderStep(); when the build
+    // failed there's nothing to download, so keep the button hidden.
+    dl.hidden = previewBuildFailed;
     dl.textContent = COPY.actions.download;
   } else {
     cont.hidden = false;
@@ -997,22 +1000,60 @@ function updateProgress() {
 
 // ---- preview / download --------------------------------------------------
 
+// Lazily creates (once) and returns the Step 6 build-error banner. index.html
+// is owned elsewhere, so the element is managed here: a role="alert" div appended
+// to the Step 6 section (the iframe's parent) so screen readers announce it when
+// it appears. Returns null if the section isn't in the DOM.
+function getPreviewErrorEl() {
+  let el = document.querySelector('.preview-error');
+  if (el) return el;
+  const section = document.querySelector('.step[data-step="6"]');
+  if (!section) return null;
+  el = document.createElement('div');
+  el.className = 'preview-error';
+  el.setAttribute('role', 'alert');
+  el.hidden = true;
+  section.appendChild(el);
+  return el;
+}
+
 function renderPreview() {
+  const iframe = document.querySelector('.pdf-preview');
+  const errEl = getPreviewErrorEl();
   try {
     const blob = buildBillOfSalePdf(state);
     if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
     lastBlobUrl = URL.createObjectURL(blob);
 
-    const iframe = document.querySelector('.pdf-preview');
-    if (iframe) iframe.src = lastBlobUrl;
+    if (iframe) {
+      iframe.src = lastBlobUrl;
+      iframe.hidden = false;
+    }
 
     const dl = document.querySelector('[data-action="download"]');
     if (dl) {
       dl.href = lastBlobUrl;
       dl.download = downloadFilename();
     }
+
+    // Success: clear any prior error so a retry after fixing data shows the
+    // preview rather than a stale message. updateActions() reads the flag to
+    // restore the download button.
+    previewBuildFailed = false;
+    if (errEl) {
+      errEl.hidden = true;
+      errEl.textContent = '';
+    }
   } catch (err) {
     console.error('PDF preview build failed:', err);
+    // Surface a visible, accessible message and hide the blank iframe. The
+    // download button is hidden by updateActions() via previewBuildFailed.
+    previewBuildFailed = true;
+    if (iframe) iframe.hidden = true;
+    if (errEl) {
+      errEl.textContent = COPY.review.buildError;
+      errEl.hidden = false;
+    }
   }
 }
 

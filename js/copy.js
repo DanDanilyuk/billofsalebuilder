@@ -260,6 +260,8 @@ export const COPY = {
   review: {
     title: "Review & download",
     sub: "Verify the document below, then download.",
+    // Shown in the Step 6 preview area when PDF generation throws.
+    buildError: "We couldn't build the document preview. Go back, double-check your entries, then return to this step.",
   },
   errors: {
     required: "Required.",
