@@ -1162,6 +1162,9 @@ function setByPath(obj, path, value) {
 function runValidators(field, value) {
   if (field.req && validators.required(value)) return 'required';
   if (!field.validate) return null;
+  // Optional fields: blank means "no answer", so format validators don't run
+  // (otherwise e.g. the optional co-owner ZIP would block Continue when empty).
+  if (!field.req && String(value ?? '').trim() === '') return null;
   for (const name of field.validate) {
     const fn = validators[name];
     if (typeof fn !== 'function') continue;
