@@ -314,9 +314,12 @@ function renderField(field) {
       placeholder.value = '';
       placeholder.textContent = COPY.app.selectPlaceholder;
       placeholder.disabled = true;
-      placeholder.selected = !value;
+      // The placeholder also wins when the stored value has no matching option,
+      // so the UI never default-selects an option that disagrees with state.
+      const optionEntries = Object.entries(field.options || {});
+      placeholder.selected = !value || !optionEntries.some(([k]) => k === value);
       sel.appendChild(placeholder);
-      Object.entries(field.options || {}).forEach(([k, v]) => {
+      optionEntries.forEach(([k, v]) => {
         const opt = document.createElement('option');
         opt.value = k;
         opt.textContent = v;
@@ -630,6 +633,16 @@ function onFieldChange(e) {
   }
   if (path === 'meta.usState') {
     applyNotaryAutoDefault();
+  }
+  // Sub-type options differ per vehicle type. A stale key (e.g. 'sedan' after
+  // switching motor -> boat) would pass required validation and print the raw
+  // key in the PDF while the select silently displays a different option.
+  if (path === 'vehicle.type') {
+    const valid = COPY.vehicle.subType?.[value] || {};
+    if (state.vehicle.subType && !(state.vehicle.subType in valid)) {
+      state.vehicle.subType = '';
+      state.vehicle.subTypeOther = '';
+    }
   }
   // Role swap: the party that just became "you" must not stay skip-filled.
   // Step 2 omits the skip checkbox entirely, so a stale skipFill=true would
