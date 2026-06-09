@@ -1058,11 +1058,15 @@ function renderPreview() {
 }
 
 function downloadFilename() {
-  const last = (state.seller?.lastName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  // Name the file after the "you" party (the one the user fills in), so a buyer
+  // with a skip-filled seller doesn't get a "...-seller" / "...-undefined" name.
+  const youP = youPrefix(state);
+  const last = (state[youP]?.lastName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const date = state.sale?.date || new Date().toISOString().slice(0, 10);
   const stateAbbr = String(state.meta?.usState || '').toLowerCase();
   const prefix = stateAbbr ? `${stateAbbr}-` : '';
-  return `${prefix}bill-of-sale-${last || 'seller'}-${date}.pdf`;
+  // Fallback to the role label ('seller' / 'buyer') when no last name is given.
+  return `${prefix}bill-of-sale-${last || youP}-${date}.pdf`;
 }
 
 // ---- helpers -------------------------------------------------------------
