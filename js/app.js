@@ -938,7 +938,18 @@ function showFieldError(path, code) {
   if (!wrap) return;
   wrap.classList.add('is-error');
   const errEl = wrap.querySelector('.field__error');
-  if (errEl) errEl.textContent = COPY.errors[code] || COPY.errors.required;
+  if (errEl) {
+    errEl.textContent = COPY.errors[code] || COPY.errors.required;
+    // Wire the control to its error text so screen readers announce it. The
+    // error div gets a lazy unique id (reusing fieldUid); aria-describedby points
+    // the field at it, and aria-invalid flags the field as failing validation.
+    if (!errEl.id) errEl.id = fieldUid(path) + '-error';
+    // For searchSelect, [data-path] is the hidden anchor; aim the ARIA at the
+    // visible input the user actually focuses (it already carries the label id).
+    const target = wrap.querySelector('.searchselect__input') || el;
+    target.setAttribute('aria-invalid', 'true');
+    target.setAttribute('aria-describedby', errEl.id);
+  }
 }
 
 function clearFieldError(el) {
@@ -947,6 +958,12 @@ function clearFieldError(el) {
   wrap.classList.remove('is-error');
   const errEl = wrap.querySelector('.field__error');
   if (errEl) errEl.textContent = '';
+  // Drop the ARIA error wiring set by showFieldError. Mirror its target so the
+  // searchSelect's visible input is cleared (not the hidden anchor). Removing
+  // absent attributes is harmless, so no guard is needed here.
+  const target = wrap.querySelector('.searchselect__input') || el;
+  target.removeAttribute('aria-invalid');
+  target.removeAttribute('aria-describedby');
 }
 
 // ---- go ------------------------------------------------------------------
