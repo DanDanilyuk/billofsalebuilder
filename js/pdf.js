@@ -340,7 +340,10 @@ function drawAck(doc, y, sale, vehicle, usState) {
   const threshold = Number.isFinite(usState?.odometerThresholdYears)
     ? usState.odometerThresholdYears
     : 20;
-  const odoNeeded = vehicle?.type === 'motor' && ageYears <= threshold;
+  // Strict <: under 49 CFR 580.17 (post-2021) a vehicle is exempt once its
+  // model year is `threshold` years before the transfer year (MY 2011 is
+  // exempt in 2031, where 2031 - 2011 = 20).
+  const odoNeeded = vehicle?.type === 'motor' && ageYears < threshold;
   if (odoNeeded && COPY.pdf.ackOdoCert) {
     body = String(body).trim() + ' ' + COPY.pdf.ackOdoCert;
   }
