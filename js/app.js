@@ -968,6 +968,19 @@ function bindActions() {
   document.querySelector('[data-action="download"]').addEventListener('click', () => {
     /* no-op; <a download> handles the save */
   });
+  // Print the generated PDF preview. Printing the blob-PDF iframe is the
+  // standard desktop path; if the iframe document can't be reached (e.g. some
+  // mobile browsers), fall back to printing the page. Mobile users are better
+  // served by Open PDF in a new tab, then printing from there.
+  document.querySelector('[data-action="print"]').addEventListener('click', () => {
+    const f = document.querySelector('.pdf-preview');
+    if (f && f.contentWindow) {
+      try { f.contentWindow.focus(); f.contentWindow.print(); }
+      catch { window.print(); }
+    } else {
+      window.print();
+    }
+  });
 }
 
 function goto(n) {
@@ -983,6 +996,7 @@ function updateActions(n) {
   const clear = document.querySelector('[data-action="clear"]');
   const dl = document.querySelector('[data-action="download"]');
   const openPdf = document.querySelector('[data-action="open-pdf"]');
+  const printBtn = document.querySelector('[data-action="print"]');
 
   back.hidden = n === 1;
   back.textContent = n === TOTAL_STEPS ? COPY.actions.backToEdit : COPY.actions.back;
@@ -993,17 +1007,22 @@ function updateActions(n) {
   if (n === TOTAL_STEPS) {
     cont.hidden = true;
     // renderPreview() runs just before this in renderStep(); when the build
-    // failed there's nothing to download or open, so keep both hidden.
+    // failed there's nothing to download, open, or print, so keep them hidden.
     dl.hidden = previewBuildFailed;
     dl.textContent = COPY.actions.download;
     if (openPdf) {
       openPdf.hidden = previewBuildFailed;
       openPdf.textContent = COPY.actions.openPdf;
     }
+    if (printBtn) {
+      printBtn.hidden = previewBuildFailed;
+      printBtn.textContent = COPY.actions.print;
+    }
   } else {
     cont.hidden = false;
     dl.hidden = true;
     if (openPdf) openPdf.hidden = true;
+    if (printBtn) printBtn.hidden = true;
     cont.textContent = n === TOTAL_STEPS - 1 ? COPY.actions.review : COPY.actions.continue;
   }
 }

@@ -49,6 +49,8 @@ export const COPY = {
     // Opens the generated blob PDF in a new tab; the iframe preview is unreliable
     // on some mobile browsers, so this is the dependable view path.
     openPdf: "Open PDF in new tab",
+    // Prints the generated PDF preview (desktop path; mobile uses Open PDF).
+    print: "Print",
     backToEdit: "Back to edit",
   },
   modals: {
