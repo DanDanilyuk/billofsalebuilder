@@ -124,7 +124,7 @@ export const COPY = {
     vin: {
       label: "VIN",
       req: true,
-      hint: "17 characters. We exclude letters I, O, and Q.",
+      hint: "17 characters; we exclude letters I, O, and Q. The VIN is sent to the NHTSA database to fill in year, make, and model; nothing else leaves your browser.",
       status: {
         decoding: "Decoding VIN...",
         decoded: "Decoded - year, make, model, and body filled in.",
@@ -202,7 +202,7 @@ export const COPY = {
     street2: { label: "Apt / Suite / Unit (optional)", req: false },
     city: { label: "City", req: true },
     state: { label: "State", req: true },
-    zip: { label: "ZIP", req: true },
+    zip: { label: "ZIP", req: true, hint: "The ZIP is sent to a public postal-code service to fill in city and state; nothing else leaves your browser." },
     phone: { label: "Phone (optional)", req: false },
     license: {
       label: "Driver's license / ID number (optional)",
