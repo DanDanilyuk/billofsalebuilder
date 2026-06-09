@@ -150,6 +150,12 @@ function drawSectionHeading(doc, y, label) {
 //                         the notary block whose labels are wider)
 function drawRow(doc, y, label, value, opts = {}) {
   const text = value == null ? '' : String(value);
+  // Row-start guard: preceding rows may have wrapped far enough that this row
+  // begins below the footer reserve (ensureSpace only checks section starts).
+  if (y > PAGE_H - FOOTER_RESERVE) {
+    doc.addPage();
+    y = MARGIN;
+  }
   doc.setFont('helvetica', 'normal').setFontSize(10);
   setColor(doc, MUTED);
   doc.text(label, BODY_INDENT, y);
@@ -174,11 +180,21 @@ function drawRow(doc, y, label, value, opts = {}) {
   }
   setColor(doc, INK);
 
+  // Per-line page-break guard: ensureSpace() reserves conservative worst-case
+  // heights between sections, but unbounded free text (a very long address)
+  // can still wrap past the reservation - without this check jsPDF would draw
+  // below the page bottom and silently discard the text.
   const lines = text === '' ? [''] : doc.splitTextToSize(text, valueW);
-  lines.forEach((line, i) => {
-    doc.text(line, valueX, y + i * BODY_LINE_H);
+  let lineY = y;
+  lines.forEach((line) => {
+    if (lineY > PAGE_H - FOOTER_RESERVE) {
+      doc.addPage();
+      lineY = MARGIN;
+    }
+    doc.text(line, valueX, lineY);
+    lineY += BODY_LINE_H;
   });
-  return y + Math.max(1, lines.length) * BODY_LINE_H;
+  return lineY;
 }
 
 // ---- section drawers ------------------------------------------------------

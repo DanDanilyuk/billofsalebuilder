@@ -355,6 +355,9 @@ function renderField(field) {
         if (field.step != null) input.step = String(field.step);
       } else {
         input.type = 'text';
+        // Generous cap on free text. The PDF wraps long values, but unbounded
+        // input (multi-hundred-char "addresses") only bloats the document.
+        input.maxLength = 120;
       }
       // Sensible autocomplete hints.
       if (/\.zip$/.test(field.path)) input.autocomplete = 'postal-code';
