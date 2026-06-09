@@ -1,0 +1,32 @@
+# Dev-only and tooling files kept out of the deployed Workers Assets bundle.
+# Workers uploads from disk (not git), so .gitignore does NOT apply here;
+# patterns are gitignore-style, relative to the assets directory (repo root).
+# Everything NOT listed here ships: index.html, css/, js/, lib/, assets/,
+# favicon.svg, og.svg, og.png, robots.txt, sitemap.xml.
+
+# Version control
+.git/
+.gitignore
+.assetsignore
+
+# Package manager / tooling
+node_modules/
+
+# Wrangler config + local state (config and secrets must never ship)
+wrangler.jsonc
+.wrangler/
+.dev.vars*
+.env*
+
+# Dev harnesses and docs (no .md file needs to ship)
+__test/
+docs/
+*.md
+
+# Agent / editor tooling state
+.claude/
+.superpowers/
+.playwright-mcp/
+
+# OS cruft
+.DS_Store
