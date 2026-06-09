@@ -20,6 +20,12 @@ const PAGE_W = 612;
 const PAGE_H = 792;
 const CONTENT_W = PAGE_W - MARGIN * 2;
 
+// Vertical room reserved at the bottom of EVERY page for the footer, which
+// can wrap to 2-3 lines. Both the inter-section overflow guard (ensureSpace)
+// and the notary/signature reservation keep body content above
+// PAGE_H - FOOTER_RESERVE so nothing runs under the footer.
+const FOOTER_RESERVE = 60;
+
 // Color tokens (RGB). Matches site palette: ink #0a0a0a, muted #737373,
 // subtle #e5e5e5.
 const INK = [10, 10, 10];
@@ -31,6 +37,20 @@ const HEADING_GAP = 20;       // gap from heading baseline to first body line
 const BODY_LINE_H = 14;       // 10pt body @ ~1.4 line height
 const ACK_LINE_H = 14;        // 10pt ack @ ~1.4 line height
 const SECTION_GAP = 18;       // gap between sections
+
+// Conservative worst-case heights (pt) for each major body section, consumed
+// by ensureSpace() to decide whether a section should start on a fresh page
+// rather than overflow under the footer. Deliberately generous: a party can
+// carry a co-owner with a wrapped multi-line address, and the acknowledgment
+// can wrap to several lines once the odometer-cert sentence is appended.
+// Overestimating only forces an early page break (safe); underestimating
+// would let a section run under the footer (the bug this guards against).
+const SECTION_HEIGHT = {
+  party: 210,
+  vehicle: 150,
+  sale: 100,
+  ack: 160,
+};
 
 // Body indent (relative to MARGIN).
 const BODY_INDENT = MARGIN + 14;
@@ -55,6 +75,18 @@ function setColor(doc, rgb) {
 
 function setStroke(doc, rgb) {
   doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+}
+
+// If `needed` pt of vertical space won't fit above the footer reserve on the
+// current page, start a fresh page and return the reset top margin (MARGIN);
+// otherwise return y unchanged. Called before each major body section so a
+// section never starts so low that it spills under the per-page footer.
+function ensureSpace(doc, y, needed) {
+  if (y + needed > PAGE_H - FOOTER_RESERVE) {
+    doc.addPage();
+    return MARGIN;
+  }
+  return y;
 }
 
 // COPY key reads tolerate either the legacy numeric layout (step1 / step4)
@@ -419,10 +451,18 @@ export function buildBillOfSalePdf(state) {
   doc.line(MARGIN, y, PAGE_W - MARGIN, y);
   y += 24;
 
+  // Each major body section is preceded by an overflow guard: if its
+  // conservative worst-case height won't fit above the footer reserve on the
+  // current page, ensureSpace() breaks to a fresh page first. (The seller is
+  // the first section and always fits on page 1, so it needs no guard.)
   y = drawParty(doc, y, COPY.pdf.sellerHeading, state.seller);
+  y = ensureSpace(doc, y, SECTION_HEIGHT.party);
   y = drawParty(doc, y, COPY.pdf.buyerHeading, state.buyer);
+  y = ensureSpace(doc, y, SECTION_HEIGHT.vehicle);
   y = drawVehicle(doc, y, state.vehicle);
+  y = ensureSpace(doc, y, SECTION_HEIGHT.sale);
   y = drawSale(doc, y, state.sale);
+  y = ensureSpace(doc, y, SECTION_HEIGHT.ack);
   y = drawAck(doc, y, state.sale, state.vehicle, usState);
 
   // Reserve room for the optional notary block + signature block + footer;
@@ -437,7 +477,6 @@ export function buildBillOfSalePdf(state) {
   const NOTARY_BLOCK_HEIGHT = includeNotary
     ? (HEADING_GAP + 4 * BODY_LINE_H + SECTION_GAP)
     : 0;
-  const FOOTER_RESERVE = 60;     // extra room if footer text wraps to 2-3 lines
   if (y + NOTARY_BLOCK_HEIGHT + SIG_BLOCK_HEIGHT > PAGE_H - FOOTER_RESERVE) {
     doc.addPage();
     y = MARGIN;
@@ -447,8 +486,14 @@ export function buildBillOfSalePdf(state) {
   }
   y = drawSignatures(doc, y);
 
-  // Footer is anchored to the bottom of the current (last) page.
-  drawFooter(doc, usState);
+  // Footer goes on EVERY page (anchored to each page's bottom), so multi-page
+  // documents carry the disclaimer + DMV reference on each sheet, not just the
+  // last. Done after all content is laid out and the final page count is known.
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i += 1) {
+    doc.setPage(i);
+    drawFooter(doc, usState);
+  }
 
   return doc.output('blob');
 }
