@@ -345,7 +345,7 @@ function renderField(field) {
       // Hidden placeholder for the empty state.
       const placeholder = document.createElement('option');
       placeholder.value = '';
-      placeholder.textContent = 'Choose...';
+      placeholder.textContent = COPY.app.selectPlaceholder;
       placeholder.disabled = true;
       placeholder.selected = !value;
       sel.appendChild(placeholder);
@@ -438,7 +438,7 @@ function buildSearchSelect(field, currentValue, controlId) {
   input.type = 'text';
   input.autocomplete = 'off';
   input.spellcheck = false;
-  input.placeholder = 'Type a state name...';
+  input.placeholder = field.placeholder || '';
   // Combobox pattern: announce the popover state and active option to SRs.
   input.setAttribute('aria-autocomplete', 'list');
   input.setAttribute('role', 'combobox');
@@ -983,7 +983,7 @@ function updateActions(n) {
   } else {
     cont.hidden = false;
     dl.hidden = true;
-    cont.textContent = n === TOTAL_STEPS - 1 ? 'Review' : COPY.actions.continue;
+    cont.textContent = n === TOTAL_STEPS - 1 ? COPY.actions.review : COPY.actions.continue;
   }
 }
 

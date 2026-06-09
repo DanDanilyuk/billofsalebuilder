@@ -19,6 +19,8 @@ export const COPY = {
     // height and the page doesn't reflow once a state is committed).
     subtitleNoState: "Select a state",
     footerDisclaimerNoState: "Not legal advice. Verify with your state DMV before relying on this document.",
+    // Empty-state option shown in every <select> control.
+    selectPlaceholder: "Choose...",
   },
   // Step 1 state-guidance card. Rendered by app.js renderStateGuidance() from
   // the selected state's STATES entry. {name} = state name, {days} = the
@@ -38,6 +40,8 @@ export const COPY = {
   actions: {
     back: "Back",
     continue: "Continue",
+    // Shown on the Continue button for the last form step (before PDF preview).
+    review: "Review",
     clear: "Clear form",
     download: "Download PDF",
     backToEdit: "Back to edit",
@@ -88,7 +92,7 @@ export const COPY = {
     },
   },
   meta: {
-    usState: { label: "State where the title will be transferred", req: true },
+    usState: { label: "State where the title will be transferred", req: true, placeholder: "Type a state name..." },
     role: {
       label: "I am the...",
       req: true,
