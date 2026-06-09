@@ -1013,7 +1013,18 @@ function updateProgress() {
     const n = Number(seg.dataset.step);
     seg.classList.toggle('is-done', n < currentStep);
     seg.classList.toggle('is-current', n === currentStep);
+    // Expose the active step to assistive tech (color alone isn't perceivable).
+    if (n === currentStep) seg.setAttribute('aria-current', 'step');
+    else seg.removeAttribute('aria-current');
   });
+  // Dynamic, descriptive label so SRs announce "Step N of 6" as the user moves.
+  const prog = document.querySelector('.progress');
+  if (prog) {
+    prog.setAttribute(
+      'aria-label',
+      COPY.app.progressLabel.replace('{n}', currentStep).replace('{total}', TOTAL_STEPS)
+    );
+  }
 }
 
 // ---- preview / download --------------------------------------------------

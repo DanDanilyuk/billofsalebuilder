@@ -21,6 +21,8 @@ export const COPY = {
     footerDisclaimerNoState: "Not legal advice. Verify with your state DMV before relying on this document.",
     // Empty-state option shown in every <select> control.
     selectPlaceholder: "Choose...",
+    // Accessible label for the progress bar; {n}/{total} filled by updateProgress().
+    progressLabel: "Step {n} of {total}",
   },
   // Step 1 state-guidance card. Rendered by app.js renderStateGuidance() from
   // the selected state's STATES entry. {name} = state name, {days} = the
