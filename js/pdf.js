@@ -13,6 +13,7 @@
 
 import { COPY } from './copy.js';
 import { getState } from './states.js';
+import { formatPhone } from './validation.js';
 
 // Page geometry (US Letter at 72dpi, 0.75" margins).
 const MARGIN = 54;
@@ -208,7 +209,7 @@ function drawPartyEntry(doc, y, p) {
   y = drawRow(doc, y, rows.name, partyFullName(p));
   y = drawRow(doc, y, rows.address, partyAddressLine(p));
   if (p.phone && String(p.phone).trim()) {
-    y = drawRow(doc, y, rows.phone, p.phone);
+    y = drawRow(doc, y, rows.phone, formatPhone(p.phone));
   }
   if (p.license && String(p.license).trim()) {
     y = drawRow(doc, y, rows.dlId, p.license);

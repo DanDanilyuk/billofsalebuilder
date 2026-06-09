@@ -71,3 +71,13 @@ export const validators = {
     return /^\d{10}$/.test(s.replace(/\D/g, '')) ? null : 'phone';
   },
 };
+
+// Pure display formatter (NOT a validator): renders a complete 10-digit phone
+// as (xxx) xxx-xxxx. Partial or non-10-digit input is returned trimmed and
+// otherwise untouched so phoneOptional can still flag it. Used on blur in app.js
+// and when printing the PDF.
+export function formatPhone(v) {
+  const digits = String(v ?? '').replace(/\D/g, '');
+  if (digits.length === 10) return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return String(v ?? '').trim();
+}

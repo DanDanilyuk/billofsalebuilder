@@ -21,7 +21,7 @@
 import { COPY } from './copy.js';
 import { defaultState, loadState, saveState, clearState, localDateString } from './storage.js';
 import { fieldsForStep, youPrefix, otherPrefix } from './fields.js';
-import { validators } from './validation.js';
+import { validators, formatPhone } from './validation.js';
 import { buildBillOfSalePdf } from './pdf.js';
 import { decodeVin } from './vin-decoder.js';
 import { decodeZip } from './zip-decoder.js';
@@ -675,6 +675,18 @@ function onFieldChange(e) {
   // doesn't hammer the API while the user is still typing. Fills city/state
   // ONLY when blank, so user-edited values are preserved.
   if (e.type === 'change' && /\.zip$/.test(path)) triggerZipLookup(path);
+
+  // Phone -> (xxx) xxx-xxxx. Fires only on blur (e.type==='change'), and only
+  // when formatPhone returns the complete formatted form, so partial input
+  // mid-typo is left alone for the validator to flag.
+  if (e.type === 'change' && /\.phone$/.test(path)) {
+    const formatted = formatPhone(value);
+    if (formatted !== value && /^\(\d{3}\) \d{3}-\d{4}$/.test(formatted)) {
+      setByPath(state, path, formatted);
+      e.target.value = formatted;
+      saveState(state);
+    }
+  }
 
   if (RERENDER_PATHS.has(path)) {
     applyDynamicChrome(currentStep);
