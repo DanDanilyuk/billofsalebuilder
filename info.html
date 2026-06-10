@@ -100,6 +100,14 @@
   }
   </script>
 
+  <!-- Preload the self-hosted Inter weights so they download in parallel with
+       the CSS instead of after it (fonts are otherwise discovered only once
+       the stylesheet is parsed), shrinking the font-swap flash on cold loads.
+       crossorigin is required for font preloads even same-origin. -->
+  <link rel="preload" href="assets/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/Inter-Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/Inter-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+
   <link rel="stylesheet" href="css/styles.css">
 
   <script>
