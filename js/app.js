@@ -1012,6 +1012,14 @@ function showModal(key) {
 // ---- actions -------------------------------------------------------------
 
 function bindActions() {
+  // Step forms have no submit button, so HTML implicit submission fires when a
+  // form holds exactly one text-like field (e.g. Enter on a no-match state
+  // search), GET-reloading the page. Navigation is button-driven; never submit.
+  // The <form> elements persist across renderForm (only innerHTML is cleared),
+  // so binding once here covers every re-render.
+  document.querySelectorAll('.step__form').forEach((form) => {
+    form.addEventListener('submit', (e) => e.preventDefault());
+  });
   document.querySelector('[data-action="back"]').addEventListener('click', () => {
     goto(currentStep - 1);
   });
