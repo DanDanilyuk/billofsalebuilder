@@ -128,7 +128,7 @@ export const COPY = {
     vin: {
       label: "VIN",
       req: true,
-      hint: "17 characters; we exclude letters I, O, and Q. The VIN is sent to the NHTSA database to fill in year, make, and model; nothing else leaves your browser.",
+      hint: "17 characters. VINs never use the letters I, O, or Q. The VIN is sent to the NHTSA database to fill in year, make, and model; nothing else leaves your browser.",
       status: {
         decoding: "Decoding VIN...",
         decoded: "Decoded - year, make, model, and body filled in.",
@@ -279,7 +279,7 @@ export const COPY = {
     hin: "Must be exactly 12 characters.",
     year: "Enter a year between 1900 and next year.",
     zip: "Use the format 12345 or 12345-6789.",
-    price: "Enter a positive amount.",
+    price: "Enter an amount of 0 or more.",
     odometer: "Enter the odometer reading as a whole number, zero or more.",
     length: "Enter the length in feet as a number, zero or more.",
     date: "Enter a valid date.",
