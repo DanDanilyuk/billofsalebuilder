@@ -99,7 +99,7 @@ export const COPY = {
     },
   },
   meta: {
-    usState: { label: "State where the title will be transferred", req: true, placeholder: "Type a state name..." },
+    usState: { label: "State where the title will be transferred", req: true, placeholder: "Type a state name...", noMatches: "No matching states" },
     role: {
       label: "I am the...",
       req: true,

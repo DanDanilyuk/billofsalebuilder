@@ -261,6 +261,12 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+.searchselect__empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: default;
+}
 /* On the --subtle highlight background, --muted falls under 4.5:1 in both
    themes; promote the abbreviation to full ink while the row is active. */
 .searchselect__option[aria-selected="true"] .abbr,

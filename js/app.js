@@ -451,6 +451,18 @@ function buildSearchSelect(field, currentValue, controlId) {
   });
   optionEls.forEach((o) => list.appendChild(o));
 
+  // Muted "no matches" row, shown by filterOptions when the query hides every
+  // option (otherwise the popover collapses to an empty sliver). It is not in
+  // optionEls and lacks the option class, so keyboard nav and the mousedown
+  // commit both skip it.
+  const emptyEl = document.createElement('li');
+  emptyEl.className = 'searchselect__empty';
+  emptyEl.setAttribute('role', 'option');
+  emptyEl.setAttribute('aria-disabled', 'true');
+  emptyEl.textContent = field.noMatches || '';
+  emptyEl.hidden = true;
+  list.appendChild(emptyEl);
+
   // Hidden anchor: the wizard's onFieldChange listens for this via data-path.
   const anchor = document.createElement('input');
   anchor.type = 'hidden';
@@ -509,6 +521,7 @@ function buildSearchSelect(field, currentValue, controlId) {
         || (s && s.abbr.toLowerCase().includes(q));
       o.hidden = !matches;
     });
+    emptyEl.hidden = optionEls.some((o) => !o.hidden);
     // Don't auto-highlight on filter change. Enter/Tab fall back to the first
     // visible match when nothing is highlighted (handled in keydown), so users
     // who type "California" + Enter commit California and ArrowDown moves the
@@ -535,9 +548,24 @@ function buildSearchSelect(field, currentValue, controlId) {
     input.value = obj ? obj.name : '';
   }
 
+  // Select the committed name on focus so typing replaces it instead of
+  // appending ("TexasOhio"). A mouse click places the caret after focus fires,
+  // undoing the select(), so the first mouseup after a click-to-focus
+  // re-selects and suppresses that caret placement.
+  let selectOnMouseUp = false;
+  input.addEventListener('mousedown', () => {
+    selectOnMouseUp = document.activeElement !== input;
+  });
+  input.addEventListener('mouseup', (e) => {
+    if (!selectOnMouseUp) return;
+    selectOnMouseUp = false;
+    e.preventDefault();
+    input.select();
+  });
   input.addEventListener('focus', () => {
     filterOptions('');
     openList();
+    input.select();
   });
   input.addEventListener('input', () => {
     filterOptions(input.value);
@@ -587,11 +615,13 @@ function buildSearchSelect(field, currentValue, controlId) {
     }
   });
   // Use mousedown so the click commits before the input's blur fires (which
-  // would otherwise revert the value).
+  // would otherwise revert the value). preventDefault for ANY press inside the
+  // list (the "no matches" row, the scrollbar) so focus never leaves the input
+  // while the popover is open; only an option press commits.
   list.addEventListener('mousedown', (e) => {
+    e.preventDefault();
     const li = e.target.closest('.searchselect__option');
     if (!li) return;
-    e.preventDefault();
     commit(li.dataset.value);
   });
 

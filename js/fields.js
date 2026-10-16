@@ -36,6 +36,7 @@ function metaFields() {
       kind: 'searchSelect',
       optionsKey: 'states',
       placeholder: c.usState.placeholder,
+      noMatches: c.usState.noMatches,
       validate: ['usState'],
     },
     {
