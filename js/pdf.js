@@ -129,6 +129,15 @@ function formatPrice(sale) {
   });
 }
 
+// 45210 -> "45,210". Blank stays blank; anything non-numeric (shouldn't pass
+// the odometer validator) prints as entered rather than as "NaN".
+function formatOdometer(v) {
+  const s = v == null ? '' : String(v).trim();
+  if (s === '') return '';
+  const n = Number(s);
+  return Number.isFinite(n) ? n.toLocaleString('en-US') : s;
+}
+
 // ---- drawing primitives ---------------------------------------------------
 
 function drawSectionHeading(doc, y, label) {
@@ -274,11 +283,11 @@ function drawVehicle(doc, y, vehicle) {
   const lengthValue = (v) => `${v} ${COPY.pdf.lengthUnit}`;
   y = drawSectionHeading(doc, y, COPY.pdf.vehicleHeading);
 
-  const sub = subTypeLabel(vehicle);
-  const descParts = [vehicle.year, vehicle.make, vehicle.model, vehicle.color]
-    .map(s => (s == null ? '' : String(s).trim()))
-    .filter(Boolean);
-  const desc = sub ? `${descParts.join(' ')}, ${sub}` : descParts.join(' ');
+  // "2018 Honda Civic, Blue, Sedan": color gets its own comma-separated slot
+  // so it can't read as part of the model name ("Civic Blue").
+  const clean = (s) => (s == null ? '' : String(s).trim());
+  const ymm = [vehicle.year, vehicle.make, vehicle.model].map(clean).filter(Boolean).join(' ');
+  const desc = [ymm, clean(vehicle.color), subTypeLabel(vehicle)].filter(Boolean).join(', ');
 
   const typeLabel = COPY.vehicle.type.options[vehicle.type] || vehicle.type || '';
   y = drawRow(doc, y, rows.type, typeLabel);
@@ -302,7 +311,7 @@ function drawVehicle(doc, y, vehicle) {
     y = drawRow(doc, y, rows.vin, (vehicle.vin || '').toUpperCase(), { mono: true });
     const unit = vehicle.odometerUnit === 'km' ? 'km' : 'miles';
     const status = COPY.vehicle.odometerStatus.options[vehicle.odometerStatus] || '';
-    const odo = `${vehicle.odometer || ''} ${unit}${status ? ` (${status})` : ''}`;
+    const odo = `${formatOdometer(vehicle.odometer)} ${unit}${status ? ` (${status})` : ''}`;
     y = drawRow(doc, y, rows.odometer, odo);
   }
   return y + SECTION_GAP;
