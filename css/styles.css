@@ -190,7 +190,10 @@ body {
 
 .actions {
   position: sticky; bottom: 0;
-  display: flex; gap: var(--space-2);
+  /* Wrap (with nowrap labels on .btn) so a crowded row - Step 6's four PDF
+     actions - breaks onto a second line instead of squeezing labels onto
+     three lines. Two-button steps still fit on one row. */
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   background: linear-gradient(to top, var(--bg) 60%, transparent);
   margin: 0 calc(-1 * var(--space-4));
@@ -203,6 +206,7 @@ body {
   border-radius: var(--radius-sm);
   padding: 0 var(--space-4);
   font: 500 14px/1 var(--font-sans);
+  white-space: nowrap;
   cursor: pointer;
   text-decoration: none;
   background: var(--surface);
