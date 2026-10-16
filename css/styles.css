@@ -18,7 +18,10 @@
 }
 
 :root {
-  color-scheme: light dark;
+  /* Pinned per theme (not "light dark"): native controls - radios,
+     checkboxes, the date picker icon - must follow the manual toggle, not the
+     OS preference. Light is the default token set (also the no-JS case). */
+  color-scheme: light;
   --bg: #fafaf9;
   --surface: #ffffff;
   --bg-elevated: #f5f5f4;
@@ -50,6 +53,7 @@
      eye strain compared to neutral grays at the same lightness, and
      wider tonal gaps between bg / surface / elevated give inputs
      and cards real separation without resorting to harsh borders. */
+  color-scheme: dark;
   --bg: #0d1117;            /* cool deep base */
   --surface: #161b22;       /* +5L lift for inputs, modal, cards */
   --bg-elevated: #1f242b;   /* +5L again for prominent checkboxes */
