@@ -350,6 +350,9 @@ function renderField(field) {
       input.value = value ?? '';
       if (field.kind === 'date') {
         input.type = 'date';
+        // Local date, computed per render so a tab left open past midnight
+        // picks up the new day on the next step render.
+        if (field.maxToday) input.max = localDateString();
       } else if (field.kind === 'number') {
         input.type = 'number';
         // Optional per-field hints drive inputMode + native min/step without

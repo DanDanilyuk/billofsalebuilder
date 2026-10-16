@@ -221,7 +221,9 @@ function saleFields(state) {
       req: true, kind: 'number', validate: ['price'], min: 0, step: '0.01',
       showWhen: (s) => s.sale.payment !== 'gift' && !s.sale.priceNegotiable,
     },
-    { path: 'sale.date', label: c.date.label, req: true, kind: 'date', validate: ['date'] },
+    // maxToday caps the native picker at today (the date validator rejects
+    // future dates anyway; this just keeps the picker from offering them).
+    { path: 'sale.date', label: c.date.label, req: true, kind: 'date', validate: ['date'], maxToday: true },
     { path: 'sale.payment', label: c.payment.label, req: true, kind: 'radio', options: c.payment.options },
     {
       path: 'sale.paymentOther', label: c.paymentOther.label,
