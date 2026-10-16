@@ -230,13 +230,13 @@ export const COPY = {
     title: "Seller",
     sub: "Who is selling the vehicle.",
     skipFill: { label: "Skip - leave seller blank for handwriting", req: false },
-    nameHint: "As it appears on the title.",
+    nameHint: "Enter names exactly as they appear on the title.",
   },
   buyer: {
     title: "Buyer",
     sub: "Who is purchasing the vehicle.",
     skipFill: { label: "Skip - leave buyer blank for handwriting", req: false },
-    nameHint: "As it appears on your driver's license.",
+    nameHint: "Enter names exactly as they appear on the driver's license.",
   },
   sale: {
     title: "Sale terms",
