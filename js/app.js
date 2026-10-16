@@ -635,7 +635,21 @@ function bindGlobalSearchSelectClose() {
 function onFieldChange(e) {
   const path = e.target.dataset.path;
   if (!path) return;
-  const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  let value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  // VINs and HINs never contain whitespace, but a pasted one often carries a
+  // stray space, which fails the length check and blocks VIN auto-decode.
+  // Strip it here (keeping the caret in place) so state, validation, decode,
+  // and the PDF all see the compact identifier.
+  if (path === 'vehicle.vin' || path === 'vehicle.hin') {
+    const compact = value.replace(/\s+/g, '');
+    if (compact !== value) {
+      const caret = e.target.selectionStart ?? value.length;
+      const newCaret = value.slice(0, caret).replace(/\s+/g, '').length;
+      e.target.value = compact;
+      try { e.target.setSelectionRange(newCaret, newCaret); } catch { /* not focused */ }
+      value = compact;
+    }
+  }
   setByPath(state, path, value);
 
   // Side effects that have to land before saveState / re-render.
