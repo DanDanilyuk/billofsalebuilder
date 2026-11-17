@@ -5,7 +5,11 @@
 // (it inspects field.req before delegating here).
 
 export const validators = {
-  required: (v) => (v === '' || v == null || v === false) ? 'required' : null,
+  // Whitespace-only text counts as empty: "   " in a name field would otherwise
+  // pass and print a blank line on the document.
+  required: (v) => (v == null || v === false || (typeof v === 'string' && v.trim() === ''))
+    ? 'required'
+    : null,
 
   // VIN: 17 chars, A-Z and 0-9, excluding I, O, Q.
   vin: (v) => {
