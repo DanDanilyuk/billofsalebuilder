@@ -753,3 +753,23 @@ const NEUTRAL_STATE = {
 export function getState(abbr) {
   return STATES[String(abbr || '').toUpperCase()] || NEUTRAL_STATE;
 }
+
+// Exact full-name lookup for the state picker's click-away commit: when the
+// user has typed a whole state name and leaves the field without picking an
+// option, the picker keeps it instead of throwing the text away. Returns the
+// STATES entry itself (not a copy), or null - never NEUTRAL_STATE, so the
+// caller can tell "no match" from a real jurisdiction.
+// Case, surrounding whitespace and runs of inner whitespace are ignored;
+// nothing else is. Abbreviations and partial text deliberately do NOT match:
+// the picker commits the result without the user confirming it, and a bare
+// "ma" or "in" is ambiguous between several states (or is just someone
+// part-way through typing a longer name). Do not add abbreviation or prefix
+// matching here.
+const normalizeStateName = (name) => name.trim().replace(/\s+/g, ' ').toLowerCase();
+
+export function findStateByName(name) {
+  if (typeof name !== 'string') return null;
+  const wanted = normalizeStateName(name);
+  if (!wanted) return null;
+  return STATE_LIST.find((s) => normalizeStateName(s.name) === wanted) || null;
+}

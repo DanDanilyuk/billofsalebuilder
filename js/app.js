@@ -25,7 +25,7 @@ import { validators, formatPhone } from './validation.js';
 import { buildBillOfSalePdf } from './pdf.js';
 import { decodeVin, applyVinDecode } from './vin-decoder.js';
 import { decodeZip } from './zip-decoder.js';
-import { STATES, STATE_LIST, getState } from './states.js';
+import { STATES, STATE_LIST, getState, findStateByName } from './states.js';
 import { bindThemeToggle } from './theme.js';
 
 const TOTAL_STEPS = 6;
@@ -656,8 +656,28 @@ function bindGlobalSearchSelectClose() {
         input.removeAttribute('aria-activedescendant');
       }
       if (input && anchor) {
-        const obj = STATES[anchor.value];
+        // A fully typed state name is an answer, not a search: keep it (in its
+        // canonical spelling) instead of reverting to the committed value.
+        const typed = findStateByName(input.value);
+        const keep = !!typed && typed.abbr !== anchor.value;
+        const obj = keep ? typed : STATES[anchor.value];
         input.value = obj ? obj.name : '';
+        if (!keep) return;
+        // Commit on the matching mouseup, not here. Committing shows the state
+        // guidance card, which grows the page: done on mousedown, the button
+        // under the pointer can move away before mouseup and its click never
+        // fires. By mouseup the click target is already settled, and a
+        // synchronous commit still lands before the click handler validates.
+        document.addEventListener('mouseup', () => {
+          // The mouseup can go missing (context menu, drag), leaving this to
+          // fire on a later one: skip if the field was rebuilt or edited since.
+          if (!anchor.isConnected || input.value !== typed.name) return;
+          anchor.value = typed.abbr;
+          // inPlace: same write path as commit(), minus the form re-render.
+          anchor.dispatchEvent(
+            new CustomEvent('input', { bubbles: true, detail: { inPlace: true } })
+          );
+        }, { once: true, capture: true });
       }
     });
   });
@@ -727,6 +747,14 @@ function onFieldChange(e) {
   }
 
   if (RERENDER_PATHS.has(path)) {
+    // The state picker's click-away commit runs between mouseup and click.
+    // Re-rendering there would replace the control being clicked (e.g. a role
+    // radio in this same form) before its click fires, losing the click. The
+    // Step 1 field set does not depend on the state, so the chrome is enough.
+    if (e.detail?.inPlace) {
+      applyStateChrome();
+      return;
+    }
     const focusSnap = captureFocus();
     applyDynamicChrome(currentStep);
     applyStateChrome();
