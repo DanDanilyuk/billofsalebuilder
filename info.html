@@ -8,7 +8,11 @@
   <meta name="theme-color" content="#fafaf9" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1117" media="(prefers-color-scheme: dark)">
 
-  <link rel="canonical" href="https://www.billofsalebuilder.com/info.html">
+  <!-- Canonical is the extensionless URL: Cloudflare's asset handling serves
+       this page at /info and 307-redirects /info.html to it, and a canonical
+       must not point at a URL that redirects. Keep og:url and sitemap.xml in
+       step. In-site links still use info.html so local static servers work. -->
+  <link rel="canonical" href="https://www.billofsalebuilder.com/info">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -17,7 +21,7 @@
   <meta property="og:site_name" content="Bill of Sale Builder">
   <meta property="og:title" content="How it works & FAQ - Bill of Sale Builder">
   <meta property="og:description" content="How the Bill of Sale Builder works, plus answers to common questions about vehicle bills of sale, notarization, and titling.">
-  <meta property="og:url" content="https://www.billofsalebuilder.com/info.html">
+  <meta property="og:url" content="https://www.billofsalebuilder.com/info">
   <meta property="og:image" content="https://www.billofsalebuilder.com/og.png">
 
   <meta name="twitter:card" content="summary_large_image">
