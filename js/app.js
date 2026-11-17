@@ -1106,6 +1106,15 @@ function goto(n) {
   if (n < 1 || n > TOTAL_STEPS) return;
   currentStep = n;
   renderStep(n);
+  // Move focus to the new step's heading. The Back / Continue buttons persist
+  // across steps, so focus otherwise stays on the button below the form: a
+  // keyboard user's next Tab landed in the page footer, past every field of
+  // the step they just opened, and screen readers announced nothing.
+  const title = document.querySelector(`.step[data-step="${n}"] [data-step-title]`);
+  if (title) {
+    title.tabIndex = -1;
+    title.focus({ preventScroll: true });
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

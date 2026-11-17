@@ -145,6 +145,9 @@ body {
   color: var(--muted); margin-bottom: var(--space-2);
 }
 .step__title { font-size: 24px; font-weight: 600; margin: 0 0 var(--space-1); letter-spacing: -0.02em; }
+/* The title is a programmatic focus target on step change (app.js goto), never
+   a tab stop, so it takes no focus ring. */
+.step__title:focus { outline: none; }
 .step__sub { color: var(--muted); margin: 0 0 var(--space-6); font-size: 13px; }
 
 .field { margin-bottom: var(--space-4); }
