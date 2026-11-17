@@ -931,7 +931,11 @@ async function runVinDecode(vin, type) {
 
   setTimeout(() => {
     if (String(state.vehicle.vin || '').toUpperCase() !== vin) return;
-    setVinHint(COPY.vehicle?.vin?.hint || '');
+    // Back to the field's OWN hint, not always the motor one: the trailer's
+    // "VIN or serial number" field has none, and "17 characters..." under a
+    // field that takes serials of any length is wrong.
+    const vinField = fieldsForStep(4, state).find((f) => f.path === 'vehicle.vin');
+    setVinHint(vinField?.hint || '');
   }, VIN_DECODED_REVERT_MS);
 }
 
@@ -941,6 +945,12 @@ function setVinHint(text) {
   const wrap = vinInput.closest('.field');
   if (!wrap) return;
   let hint = wrap.querySelector('.field__hint');
+  // No text means no hint row at all (renderField omits it too), rather than
+  // an empty div that still takes its margin.
+  if (!text) {
+    if (hint) hint.remove();
+    return;
+  }
   if (!hint) {
     hint = document.createElement('div');
     hint.className = 'field__hint';
