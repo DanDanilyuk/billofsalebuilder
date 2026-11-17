@@ -676,7 +676,10 @@ function bindGlobalSearchSelectClose() {
       if (input && anchor) {
         // A fully typed state name is an answer, not a search: keep it (in its
         // canonical spelling) instead of reverting to the committed value.
-        const typed = findStateByName(input.value);
+        // Primary button only: a right-click or ctrl-click opens the context
+        // menu and may never deliver the mouseup the commit below waits for,
+        // which would leave the field showing a state that is not saved.
+        const typed = (e.button === 0 && !e.ctrlKey) ? findStateByName(input.value) : null;
         const keep = !!typed && typed.abbr !== anchor.value;
         const obj = keep ? typed : STATES[anchor.value];
         input.value = obj ? obj.name : '';
