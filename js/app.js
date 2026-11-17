@@ -551,6 +551,20 @@ function buildSearchSelect(field, currentValue, controlId) {
     input.value = obj ? obj.name : '';
   }
 
+  // The option Enter / Tab should commit, or null when there is nothing to
+  // commit. A highlighted row always wins. The "first visible match" fallback
+  // is only valid for text the user typed: on focus the filter is cleared, so
+  // every option is visible and the input still holds the committed name.
+  // Treating that as a query made "first visible" mean Alabama - Tab or a
+  // second Enter after choosing Texas silently switched the state.
+  function keyboardTarget(visible) {
+    if (highlighted >= 0 && visible[highlighted]) return visible[highlighted];
+    const typed = input.value.trim();
+    const current = optionsData.find((s) => s.abbr === anchor.value);
+    const isQuery = typed !== '' && (!current || typed !== current.name);
+    return isQuery ? (visible[0] || null) : null;
+  }
+
   // Select the committed name on focus so typing replaces it instead of
   // appending ("TexasOhio"). A mouse click places the caret after focus fires,
   // undoing the select(), so the first mouseup after a click-to-focus
@@ -592,10 +606,16 @@ function buildSearchSelect(field, currentValue, controlId) {
       if (visible.length === 0) return;
       e.preventDefault();
       // If the user has explicitly highlighted a row, commit that. Otherwise
-      // commit the first visible match - so "California" + Enter commits
-      // California rather than skipping over it.
-      const target = (highlighted >= 0 && visible[highlighted]) ? visible[highlighted] : visible[0];
-      commit(target.dataset.value);
+      // commit the first match for what they typed - so "California" + Enter
+      // commits California rather than skipping over it. With nothing typed
+      // there is nothing to commit (see keyboardTarget).
+      const target = keyboardTarget(visible);
+      if (target) {
+        commit(target.dataset.value);
+      } else {
+        revertInputToCurrent();
+        closeList();
+      }
     } else if (e.key === 'Escape') {
       e.preventDefault();
       closeList();
@@ -604,13 +624,11 @@ function buildSearchSelect(field, currentValue, controlId) {
     } else if (e.key === 'Tab') {
       // On Tab, accept the highlighted option if any so a quick type-and-tab
       // workflow commits cleanly. With no highlight, fall back to the first
-      // visible match when the user has typed something - that preserves the
-      // "California" + Tab typeahead path. An empty input on Tab just reverts.
-      const visible = visibleOptions();
-      if (highlighted >= 0 && visible[highlighted]) {
-        commit(visible[highlighted].dataset.value);
-      } else if (visible.length > 0 && input.value.trim() !== '') {
-        commit(visible[0].dataset.value);
+      // match for what the user typed - that preserves the "California" + Tab
+      // typeahead path. Tabbing through with nothing typed just reverts.
+      const target = keyboardTarget(visibleOptions());
+      if (target) {
+        commit(target.dataset.value);
       } else {
         revertInputToCurrent();
         closeList();
