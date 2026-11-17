@@ -131,7 +131,7 @@ export const COPY = {
       hint: "17 characters. VINs never use the letters I, O, or Q. The VIN is sent to the NHTSA database to fill in year, make, and model; nothing else leaves your browser.",
       status: {
         decoding: "Decoding VIN...",
-        decoded: "Decoded - year, make, model, and body filled in.",
+        decoded: "VIN decoded. Check the details below and fill in anything missing.",
         failed: "Couldn't decode this VIN. Fill in the details manually.",
       },
     },
@@ -158,10 +158,13 @@ export const COPY = {
       req: true,
       motor: {
         sedan: "Sedan",
+        coupe: "Coupe",
+        convertible: "Convertible",
+        hatchback: "Hatchback",
+        wagon: "Wagon",
         suv: "SUV",
         truck: "Truck",
         van: "Van",
-        coupe: "Coupe",
         motorcycle: "Motorcycle",
         other: "Other",
       },
