@@ -23,7 +23,7 @@ import { defaultState, loadState, saveState, clearState, localDateString } from 
 import { fieldsForStep, youPrefix, otherPrefix } from './fields.js';
 import { validators, formatPhone } from './validation.js';
 import { buildBillOfSalePdf } from './pdf.js';
-import { decodeVin } from './vin-decoder.js';
+import { decodeVin, applyVinDecode } from './vin-decoder.js';
 import { decodeZip } from './zip-decoder.js';
 import { STATES, STATE_LIST, getState } from './states.js';
 import { bindThemeToggle } from './theme.js';
@@ -692,16 +692,7 @@ function onFieldChange(e) {
   if (path === 'meta.usState') {
     applyNotaryAutoDefault();
   }
-  // Sub-type options differ per vehicle type. A stale key (e.g. 'sedan' after
-  // switching motor -> boat) would pass required validation and print the raw
-  // key in the PDF while the select silently displays a different option.
-  if (path === 'vehicle.type') {
-    const valid = COPY.vehicle.subType?.[value] || {};
-    if (state.vehicle.subType && !(state.vehicle.subType in valid)) {
-      state.vehicle.subType = '';
-      state.vehicle.subTypeOther = '';
-    }
-  }
+  if (path === 'vehicle.type') dropSubTypeInvalidForType();
   // Role swap: the party that just became "you" must not stay skip-filled.
   // Step 2 omits the skip checkbox entirely, so a stale skipFill=true would
   // render the step with zero fields (and print the user's own PDF section
@@ -812,6 +803,19 @@ function restoreFocus(snap) {
   }
 }
 
+// Sub-type options differ per vehicle type. A stale key (e.g. 'sedan' after
+// switching motor -> boat) would pass required validation and print the raw
+// key in the PDF while the select silently displays a different option.
+// Run this whenever vehicle.type can change: the type radio, and a VIN decode
+// that flips the type without supplying a body of its own.
+function dropSubTypeInvalidForType() {
+  const valid = COPY.vehicle.subType?.[state.vehicle.type] || {};
+  if (state.vehicle.subType && !(state.vehicle.subType in valid)) {
+    state.vehicle.subType = '';
+    state.vehicle.subTypeOther = '';
+  }
+}
+
 // When the user picks a US state, flip includeNotary on iff the state REQUIRES
 // notarization AND the user hasn't explicitly toggled the checkbox themselves.
 // 'recommended' / 'optional' leave the box unchecked (still visible, so the
@@ -894,32 +898,27 @@ async function runVinDecode(vin, type) {
   // whatever step is now on screen (that would drop focus mid-typing there).
   const onVehicleStep = () => currentStep === 4;
 
+  // Merge the result into state; a failed lookup (null) goes through the
+  // same call. applyVinDecode overwrites the fields NHTSA supplied (its
+  // VehicleType, if present, flips the form's type) and clears a field only
+  // while it still holds an earlier decode's value, so data from a previous
+  // VIN doesn't stick. Anything the user typed by hand is kept - a failed
+  // retry must not wipe what the "fill manually" hint asked them to enter.
+  applyVinDecode(state.vehicle, decoded);
+  // The merge keeps a hand-picked body type, which may not exist under a
+  // type the decode just flipped to (motor 'sedan' -> trailer).
+  dropSubTypeInvalidForType();
+  saveState(state);
+  if (!onVehicleStep()) return;
+
   if (!decoded) {
-    // Clear the fields the decode would have controlled so the "fill manually"
-    // hint isn't a lie. Don't touch vehicle.type - we don't know what to set
-    // it to. Don't touch vin itself.
-    for (const k of ['year', 'make', 'model', 'subType', 'subTypeOther']) {
-      state.vehicle[k] = '';
-    }
-    saveState(state);
-    if (!onVehicleStep()) return;
+    // Re-render anyway: the merge may have cleared an earlier decode's values.
     const snap = captureFocus();
     renderForm(currentStep);
     setVinHint(COPY.vehicle?.vin?.status?.failed || '');
     restoreFocus(snap);
     return;
   }
-
-  // Always overwrite decode-controlled fields. NHTSA's VehicleType (if
-  // present) flips the form's type; year/make/model/body fall through to
-  // empty when NHTSA didn't supply them so stale data from a previous VIN
-  // doesn't stick.
-  if (decoded.type != null) state.vehicle.type = decoded.type;
-  for (const k of ['year', 'make', 'model', 'subType', 'subTypeOther']) {
-    state.vehicle[k] = decoded[k] != null ? decoded[k] : '';
-  }
-  saveState(state);
-  if (!onVehicleStep()) return;
 
   // Re-render so the (possibly new) vehicle.type's field set + conditional
   // fields (e.g. subTypeOther) appear/hide correctly. Restore focus to

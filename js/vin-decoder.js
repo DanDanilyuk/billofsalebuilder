@@ -18,6 +18,13 @@
 //
 // Returns null on network failure, parse failure, or empty result. Caller
 // treats null as "couldn't decode" and falls back to manual entry.
+//
+//   applyVinDecode(vehicle, decoded) -> void
+//
+// Pure (no DOM, no fetch). Merges a decodeVin() result, or null for a failed
+// lookup, into `state.vehicle` without destroying what the user typed. It
+// tracks its own writes in `vehicle.vinAutofill`; VIN_DECODE_FIELDS lists
+// the fields it manages.
 
 const ENDPOINT = 'https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues';
 // Abort a stalled vPIC request after 4s (mirrors zip-decoder) so the
@@ -137,4 +144,38 @@ export async function decodeVin(vin, vehicleType = 'motor') {
   }
 
   return Object.keys(out).length === 0 ? null : out;
+}
+
+export const VIN_DECODE_FIELDS = ['year', 'make', 'model', 'subType', 'subTypeOther'];
+
+// Two things must both hold when a VIN changes and gets decoded again:
+//   1. Output of the PREVIOUS VIN's decode must not stick around. A Civic's
+//      year/make/model next to a corrected VIN is wrong data on a legal form.
+//   2. Anything the user typed by hand must survive. The failure hint tells
+//      them to fill the details in manually; fixing one VIN character after
+//      that used to wipe all of it.
+// Blanking every field the lookup did not supply satisfies 1 and breaks 2.
+// Never blanking satisfies 2 and breaks 1. So remember what the last decode
+// wrote (`vehicle.vinAutofill`) and only clear a field that still holds
+// exactly that value - if it differs, the user edited it and it is theirs.
+//
+// decodeVin() returns subTypeOther: '' when it maps a body class. The empty
+// string counts as "not supplied" here on purpose: that is what clears a
+// stale "Other" description left by the previous VIN.
+export function applyVinDecode(vehicle, decoded) {
+  // Drafts saved before vinAutofill existed have no such key.
+  const previous = vehicle.vinAutofill || {};
+  const wrote = {};
+  // A failed decode says nothing about the type, so the user's choice stands.
+  if (decoded && decoded.type != null) vehicle.type = decoded.type;
+  for (const field of VIN_DECODE_FIELDS) {
+    const value = decoded ? decoded[field] : null;
+    if (value != null && value !== '') {
+      vehicle[field] = value;
+      wrote[field] = value;
+    } else if (vehicle[field] && vehicle[field] === previous[field]) {
+      vehicle[field] = '';
+    }
+  }
+  vehicle.vinAutofill = wrote;
 }

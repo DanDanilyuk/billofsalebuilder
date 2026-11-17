@@ -37,6 +37,10 @@ export function defaultState() {
       odometer: '',
       odometerUnit: 'miles',
       odometerStatus: 'actual',
+      // Values the last VIN decode wrote (see applyVinDecode), so a later
+      // decode can clear its own stale output without touching what the
+      // user typed.
+      vinAutofill: {},
     },
     seller: {
       firstName: '', middleName: '', lastName: '',
