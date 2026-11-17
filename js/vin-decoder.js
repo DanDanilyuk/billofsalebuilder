@@ -24,32 +24,22 @@ const ENDPOINT = 'https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues';
 // "Decoding VIN..." hint can't hang for minutes on a dead connection.
 const TIMEOUT_MS = 4000;
 
-// NHTSA BodyClass strings (lowercase) -> our subType keys.
-const BODY_CLASS_MAP_MOTOR = {
-  'sedan/saloon': 'sedan',
-  'sedan': 'sedan',
-  'sport utility vehicle (suv)/multi-purpose vehicle (mpv)': 'suv',
-  'sport utility vehicle (suv)': 'suv',
-  'multi-purpose vehicle (mpv)': 'suv',
-  'pickup': 'truck',
-  'pickup truck': 'truck',
-  'truck': 'truck',
-  'truck-tractor': 'truck',
-  'van': 'van',
-  'van (cargo)': 'van',
-  'van (passenger)': 'van',
-  'cargo van': 'van',
-  'minivan': 'van',
-  'coupe': 'coupe',
-  'hatchback/liftback/notchback': 'coupe',
-  'convertible/cabriolet': 'coupe',
-  'motorcycle': 'motorcycle',
-  'motorcycle - standard': 'motorcycle',
-  'motorcycle - cruiser': 'motorcycle',
-  'motorcycle - sport': 'motorcycle',
-  'motorcycle - touring': 'motorcycle',
-  'motorcycle - dual sport': 'motorcycle',
-};
+// NHTSA BodyClass -> our subType keys, matched by keyword against the
+// lowercased string. NHTSA rewords these labels from time to time ("(SUV)"
+// became "[SUV]", "Multi-Purpose" became "Multipurpose", the motorcycle list
+// grew), which silently broke an exact-string table and sent every SUV to
+// "Other". Matching the stable part of the label survives that. First hit
+// wins; anything unmatched (Wagon, Bus, "Sport Utility Truck [SUT]", the
+// Off-Road and Incomplete families) falls through to "Other" with NHTSA's
+// own label.
+const BODY_CLASS_RULES_MOTOR = [
+  [/^motorcycle\b/, 'motorcycle'],
+  [/sport utility vehicle|crossover utility|multi-?purpose vehicle/, 'suv'],
+  [/^(pickup|truck)\b/, 'truck'],
+  [/\b(mini)?van\b/, 'van'],
+  [/\bsedan\b/, 'sedan'],
+  [/\b(coupe|hatchback|convertible)\b/, 'coupe'],
+];
 
 const BODY_CLASS_MAP_TRAILER = {
   'utility trailer': 'utility',
@@ -71,9 +61,12 @@ const VEHICLE_TYPE_MAP = {
   'incomplete vehicle': 'motor',
   'low speed vehicle (lsv)': 'motor',
   'off road vehicle': 'motor',
+  'off-road vehicle': 'motor', // NHTSA's current spelling
   'trailer': 'trailer',
 };
 
+// For the Make only: NHTSA reports makes in ALL CAPS ("HONDA"). Model and
+// BodyClass arrive already cased the way the manufacturer writes them.
 function titleCase(s) {
   if (!s) return '';
   // Keep short all-caps tokens as-is: NHTSA reports acronym makes in caps
@@ -89,8 +82,9 @@ function titleCase(s) {
 function mapBodyClass(bodyClass, vehicleType) {
   if (!bodyClass) return null;
   const key = String(bodyClass).toLowerCase().trim();
-  const map = vehicleType === 'trailer' ? BODY_CLASS_MAP_TRAILER : BODY_CLASS_MAP_MOTOR;
-  return map[key] || null;
+  if (vehicleType === 'trailer') return BODY_CLASS_MAP_TRAILER[key] || null;
+  const rule = BODY_CLASS_RULES_MOTOR.find(([pattern]) => pattern.test(key));
+  return rule ? rule[1] : null;
 }
 
 function mapVehicleType(vt) {
@@ -127,7 +121,9 @@ export async function decodeVin(vin, vehicleType = 'motor') {
 
   if (data.ModelYear) out.year = String(data.ModelYear).trim();
   if (data.Make) out.make = titleCase(data.Make);
-  if (data.Model) out.model = titleCase(data.Model);
+  // Model is kept verbatim: title-casing it turned "CR-V" into "Cr-V", "RAV4"
+  // into "Rav4" and "4Runner" into "4runner".
+  if (data.Model) out.model = String(data.Model).trim();
   if (data.BodyClass) {
     const sub = mapBodyClass(data.BodyClass, effectiveType);
     if (sub) {
@@ -135,7 +131,8 @@ export async function decodeVin(vin, vehicleType = 'motor') {
       out.subTypeOther = '';
     } else {
       out.subType = 'other';
-      out.subTypeOther = titleCase(data.BodyClass);
+      // Verbatim for the same reason ("[SUT]" must not become "[Sut]").
+      out.subTypeOther = String(data.BodyClass).trim();
     }
   }
 
