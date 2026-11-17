@@ -22,7 +22,7 @@ import { COPY } from './copy.js';
 import { defaultState, loadState, saveState, clearState, localDateString } from './storage.js';
 import { fieldsForStep, youPrefix, otherPrefix } from './fields.js';
 import { validators, formatPhone } from './validation.js';
-import { buildBillOfSalePdf } from './pdf.js';
+import { buildBillOfSalePdf, isPdfPrintable } from './pdf.js';
 import { decodeVin, applyVinDecode } from './vin-decoder.js';
 import { decodeZip } from './zip-decoder.js';
 import { STATES, STATE_LIST, getState, findStateByName } from './states.js';
@@ -1374,16 +1374,21 @@ function setByPath(obj, path, value) {
 
 function runValidators(field, value) {
   if (field.req && validators.required(value)) return 'required';
-  if (!field.validate) return null;
-  // Optional fields: blank means "no answer", so format validators don't run
+  // Optional fields: blank means "no answer", so nothing below runs
   // (otherwise e.g. the optional co-owner ZIP would block Continue when empty).
   if (!field.req && String(value ?? '').trim() === '') return null;
-  for (const name of field.validate) {
+  for (const name of field.validate || []) {
     const fn = validators[name];
     if (typeof fn !== 'function') continue;
     const code = fn(value);
     if (code) return code;
   }
+  // Every text value is printed on the PDF, and the PDF's built-in fonts can't
+  // print every script (Cyrillic, Chinese, emoji...). So this is a generic rule
+  // by kind, not a per-field validator someone has to remember to list in
+  // fields.js. It runs last so a field's own format error wins. pdfSafe() in
+  // pdf.js stays the safety net for anything that skips validation.
+  if (field.kind === 'text' && !isPdfPrintable(value)) return 'printable';
   return null;
 }
 

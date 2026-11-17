@@ -278,6 +278,7 @@ export const COPY = {
   },
   errors: {
     required: "Required.",
+    printable: "Some characters here can't be printed. Use Latin letters, as on a US title or driver's license.",
     vin: "Must be exactly 17 characters; letters I, O, and Q are not allowed.",
     hin: "Must be exactly 12 characters.",
     year: "Enter a year between 1900 and next year.",

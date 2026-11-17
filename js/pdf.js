@@ -6,6 +6,8 @@
 //
 // Public API:
 //   buildBillOfSalePdf(state) -> Blob
+//   isPdfPrintable(value)     -> boolean (false when a character would have
+//                                to print as "?"; used by wizard validation)
 //
 // Reads from the shared state schema (vehicle / seller / buyer / sale /
 // meta) and adapts title block, odometer cert, optional notary block, and
@@ -146,6 +148,11 @@ function formatOdometer(v) {
 // Polish name prints as "Nguyen" / "Lukasz", exotic spaces and hyphens become
 // ASCII) and whatever is left (other scripts, emoji) becomes "?", so one
 // unsupported character costs one glyph instead of the row.
+// A "?" in a signed document is still a defect, and the user should hear
+// about it at the field rather than find it in the preview: isPdfPrintable()
+// is exported for the wizard's field validation and is false exactly when
+// pdfSafe() would print a "?". Both ask printableForm() about each character,
+// so what the wizard flags and what the PDF prints cannot drift apart.
 // All non-ASCII below is written as \u escapes on purpose: several of these
 // characters are indistinguishable from ASCII ones in an editor.
 const WINANSI_EXTRAS = new Set(
@@ -159,17 +166,34 @@ const PDF_FOLD = {
 };
 const isWinAnsi = (ch) => ch.charCodeAt(0) <= 0xff || WINANSI_EXTRAS.has(ch);
 
+// What one character outside Latin-1 prints as, or null when it has no
+// printable form. The only place that decision is made.
+function printableForm(ch) {
+  if (WINANSI_EXTRAS.has(ch)) return ch;
+  // Invisible characters (zero-width joiners, direction marks, emoji
+  // variation selectors, stray combining marks) have no glyph: drop them.
+  if (/[\p{Cf}\p{M}]/u.test(ch)) return '';
+  const folded = PDF_FOLD[ch] ?? ch.normalize('NFKD').replace(/\p{M}/gu, '');
+  return folded !== '' && [...folded].every(isWinAnsi) ? folded : null;
+}
+
 function pdfSafe(value) {
   // NFC first so a decomposed "e" + combining accent becomes the single
-  // Latin-1 accented letter and keeps its accent instead of losing it below.
+  // Latin-1 accented letter and keeps its accent instead of having the stray
+  // mark dropped by printableForm().
   return String(value ?? '').normalize('NFC').replace(/[^\u0000-\u00FF]/gu, (ch) => {
-    if (WINANSI_EXTRAS.has(ch)) return ch;
-    // Invisible characters (zero-width joiners, direction marks, emoji
-    // variation selectors, stray combining marks) have no glyph: drop them.
-    if (/[\p{Cf}\p{M}]/u.test(ch)) return '';
-    const folded = PDF_FOLD[ch] ?? ch.normalize('NFKD').replace(/\p{M}/gu, '');
-    return folded !== '' && [...folded].every(isWinAnsi) ? folded : '?';
+    return printableForm(ch) ?? '?';
   });
+}
+
+// Has to see the string exactly as pdfSafe() does - same NFC pass, same
+// "outside Latin-1" cut, one code point at a time - or the two could disagree
+// about a decomposed accent or an astral character.
+export function isPdfPrintable(value) {
+  for (const ch of String(value ?? '').normalize('NFC')) {
+    if (ch.codePointAt(0) > 0xff && printableForm(ch) === null) return false;
+  }
+  return true;
 }
 
 // ---- drawing primitives ---------------------------------------------------
