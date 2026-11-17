@@ -138,6 +138,40 @@ function formatOdometer(v) {
   return Number.isFinite(n) ? n.toLocaleString('en-US') : s;
 }
 
+// jsPDF's built-in Helvetica / Courier only encode WinAnsi: Latin-1 plus the
+// typographic extras below (curly quotes, dashes, the euro sign...). A single
+// character outside that set makes jsPDF emit the WHOLE string as UTF-16,
+// which prints the entire row as garbage. pdfSafe() keeps every string
+// encodable: characters with a plain-letter form are folded (a Vietnamese or
+// Polish name prints as "Nguyen" / "Lukasz", exotic spaces and hyphens become
+// ASCII) and whatever is left (other scripts, emoji) becomes "?", so one
+// unsupported character costs one glyph instead of the row.
+// All non-ASCII below is written as \u escapes on purpose: several of these
+// characters are indistinguishable from ASCII ones in an editor.
+const WINANSI_EXTRAS = new Set(
+  '\u0152\u0153\u0160\u0161\u0178\u017D\u017E\u0192\u02C6\u02DC\u2013\u2014\u2018\u2019\u201A'
+  + '\u201C\u201D\u201E\u2020\u2021\u2022\u2026\u2030\u2039\u203A\u20AC\u2122'
+);
+// Letters and hyphens that Unicode normalization can't decompose.
+const PDF_FOLD = {
+  '\u0141': 'L', '\u0142': 'l', '\u0110': 'D', '\u0111': 'd', '\u0131': 'i',
+  '\u2010': '-', '\u2011': '-', '\u2012': '-', '\u2015': '-', '\u2212': '-',
+};
+const isWinAnsi = (ch) => ch.charCodeAt(0) <= 0xff || WINANSI_EXTRAS.has(ch);
+
+function pdfSafe(value) {
+  // NFC first so a decomposed "e" + combining accent becomes the single
+  // Latin-1 accented letter and keeps its accent instead of losing it below.
+  return String(value ?? '').normalize('NFC').replace(/[^\u0000-\u00FF]/gu, (ch) => {
+    if (WINANSI_EXTRAS.has(ch)) return ch;
+    // Invisible characters (zero-width joiners, direction marks, emoji
+    // variation selectors, stray combining marks) have no glyph: drop them.
+    if (/[\p{Cf}\p{M}]/u.test(ch)) return '';
+    const folded = PDF_FOLD[ch] ?? ch.normalize('NFKD').replace(/\p{M}/gu, '');
+    return folded !== '' && [...folded].every(isWinAnsi) ? folded : '?';
+  });
+}
+
 // ---- drawing primitives ---------------------------------------------------
 
 function drawSectionHeading(doc, y, label) {
@@ -159,7 +193,9 @@ function drawSectionHeading(doc, y, label) {
 //   opts.labelW: number - override the default label gutter width (used by
 //                         the notary block whose labels are wider)
 function drawRow(doc, y, label, value, opts = {}) {
-  const text = value == null ? '' : String(value);
+  // Every user-entered value prints through here, so this is the one place
+  // that has to make it encodable.
+  const text = pdfSafe(value);
   // Row-start guard: preceding rows may have wrapped far enough that this row
   // begins below the footer reserve (ensureSpace only checks section starts).
   if (y > PAGE_H - FOOTER_RESERVE) {
@@ -448,12 +484,16 @@ function drawWitness(doc, y) {
 }
 
 function drawFooter(doc, usState) {
-  const stamp = new Date().toLocaleString();
+  // Pinned to en-US like formatDateLong: the browser's own locale can produce
+  // a stamp the built-in fonts can't print (Korean, Chinese, Arabic, Persian),
+  // which garbled the footer. pdfSafe also covers engines that put a narrow
+  // no-break space before AM/PM.
+  const stamp = new Date().toLocaleString('en-US');
   const stateName = usState?.name || 'state';
   const formRef = usState?.bosFormName ? `(${usState.bosFormName}) ` : '';
   const dmvUrl = usState?.dmvUrl || '';
   const tail = dmvUrl ? ` ${dmvUrl}` : '';
-  const text = `Generated ${stamp}. Not a substitute for ${stateName} ${formRef}DMV title transfer requirements.${tail}`;
+  const text = pdfSafe(`Generated ${stamp}. Not a substitute for ${stateName} ${formRef}DMV title transfer requirements.${tail}`);
 
   doc.setFont('helvetica', 'normal').setFontSize(8);
   setColor(doc, MUTED);
